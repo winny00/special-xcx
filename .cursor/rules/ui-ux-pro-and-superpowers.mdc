@@ -1,0 +1,33 @@
+---
+description: Enable UI/UX Pro Max and Superpowers skills for this workspace
+alwaysApply: true
+---
+
+# 先读 AGENTS.md
+
+每次对话、改代码之前，先完整阅读仓库根目录 `AGENTS.md`。其中的三端边界、UI token、雪花 ID 和胶囊避让约定优先于本文件其余条目。
+
+# Installed agent skills
+
+These skills are installed at `~/.cursor/skills/`. Read the matching `SKILL.md` before acting.
+
+## UI/UX Pro Max (`ui-ux-pro` / `ui-ux-pro-max`)
+
+Use when designing, building, reviewing, or improving UI/UX.
+
+1. Read `~/.cursor/skills/ui-ux-pro-max/SKILL.md`
+2. Generate a design system first:
+
+```bash
+python3 "$HOME/.cursor/skills/ui-ux-pro-max/scripts/search.py" "<product industry keywords>" --design-system
+```
+
+For this repo, default stack guidance is Vue / uni-app / 小程序, not html-tailwind. Brand primary is locked to `#1B7F6B`.
+
+## Superpowers
+
+Use when planning features, debugging, writing tests, executing plans, or reviewing code.
+
+1. Read `~/.cursor/skills/using-superpowers/SKILL.md`
+2. Invoke the specific skill (`brainstorming`, `systematic-debugging`, `writing-plans`, `test-driven-development`, etc.) before implementing
+3. Announce which skill is in use

@@ -1,0 +1,13 @@
+{
+  "tabbar.home": "Home",
+  "tabbar.resource": "Resources",
+  "tabbar.organization": "Orgs",
+  "tabbar.about": "About",
+  "tabbar.me": "Me",
+  "tabbar.i18n": "I18n",
+  "i18n.title": "En Title",
+  "alova.title": "Alova Request",
+  "weight": "{heavy}KG",
+  "detail": "{0}cm, {1}KG",
+  "introduction": "I am {name},height:{detail.height},weight:{detail.weight}"
+}

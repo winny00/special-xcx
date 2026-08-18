@@ -1,0 +1,129 @@
+-- ----------------------------
+-- 特殊教育平台业务表 + 角色权限初始化
+-- 在 ry_vue.sql 执行后运行本脚本
+-- ----------------------------
+
+-- 特教资源表
+CREATE TABLE IF NOT EXISTS special_resource (
+    id              bigint(20)      NOT NULL                    COMMENT '主键',
+    title           varchar(200)    NOT NULL                    COMMENT '资源标题',
+    resource_type   varchar(32)     NOT NULL                    COMMENT '资源类型 course/tool/teacher/org/assessment',
+    category        varchar(64)     DEFAULT NULL                COMMENT '分类 感统/语言/社交/行为干预等',
+    summary         varchar(500)    DEFAULT NULL                COMMENT '摘要',
+    content         text                                        COMMENT '详情内容',
+    cover_url       varchar(500)    DEFAULT NULL                COMMENT '封面图',
+    org_id          bigint(20)      DEFAULT NULL                COMMENT '所属机构ID',
+    provider_name   varchar(100)    DEFAULT NULL                COMMENT '提供者名称',
+    contact_phone   varchar(20)     DEFAULT NULL                COMMENT '联系电话',
+    region          varchar(100)    DEFAULT NULL                COMMENT '服务区域',
+    price           decimal(10,2)   DEFAULT 0.00                COMMENT '参考价格',
+    status          tinyint         DEFAULT 0                   COMMENT '状态 0草稿 1已发布 2已下架',
+    view_count      int(11)         DEFAULT 0                   COMMENT '浏览量',
+    create_dept     bigint(20)      DEFAULT NULL                COMMENT '创建部门',
+    create_by       bigint(20)      DEFAULT NULL                COMMENT '创建者',
+    create_time     datetime        DEFAULT NULL                COMMENT '创建时间',
+    update_by       bigint(20)      DEFAULT NULL                COMMENT '更新者',
+    update_time     datetime        DEFAULT NULL                COMMENT '更新时间',
+    del_flag        char(1)         DEFAULT '0'                 COMMENT '删除标志',
+    PRIMARY KEY (id)
+) ENGINE=InnoDB COMMENT='特教资源表';
+
+-- 机构/学校表
+CREATE TABLE IF NOT EXISTS special_organization (
+    id              bigint(20)      NOT NULL                    COMMENT '主键',
+    name            varchar(200)    NOT NULL                    COMMENT '机构名称',
+    org_type        varchar(32)     NOT NULL                    COMMENT '类型 org/school',
+    license_no      varchar(100)    DEFAULT NULL                COMMENT '资质编号',
+    license_url     varchar(500)    DEFAULT NULL                COMMENT '资质证照',
+    address         varchar(300)    DEFAULT NULL                COMMENT '地址',
+    region          varchar(100)    DEFAULT NULL                COMMENT '所在区域',
+    contact_name    varchar(50)     DEFAULT NULL                COMMENT '联系人',
+    contact_phone   varchar(20)     DEFAULT NULL                COMMENT '联系电话',
+    description     text                                        COMMENT '机构简介',
+    audit_status    tinyint         DEFAULT 0                 COMMENT '审核状态 0待审 1通过 2拒绝',
+    status          tinyint         DEFAULT 1                 COMMENT '状态 0停用 1正常',
+    create_dept     bigint(20)      DEFAULT NULL                COMMENT '创建部门',
+    create_by       bigint(20)      DEFAULT NULL                COMMENT '创建者',
+    create_time     datetime        DEFAULT NULL                COMMENT '创建时间',
+    update_by       bigint(20)      DEFAULT NULL                COMMENT '更新者',
+    update_time     datetime        DEFAULT NULL                COMMENT '更新时间',
+    del_flag        char(1)         DEFAULT '0'                 COMMENT '删除标志',
+    PRIMARY KEY (id)
+) ENGINE=InnoDB COMMENT='特教机构学校表';
+
+-- 预约/咨询申请表
+CREATE TABLE IF NOT EXISTS special_appointment (
+    id              bigint(20)      NOT NULL                    COMMENT '主键',
+    resource_id     bigint(20)      NOT NULL                    COMMENT '关联资源ID',
+    resource_title  varchar(200)    DEFAULT NULL                COMMENT '资源标题快照',
+    user_id         bigint(20)      DEFAULT NULL                COMMENT '申请人用户ID',
+    contact_name    varchar(50)     NOT NULL                    COMMENT '联系人',
+    contact_phone   varchar(20)     NOT NULL                    COMMENT '联系电话',
+    child_age       varchar(20)     DEFAULT NULL                COMMENT '儿童年龄',
+    remark          varchar(500)    DEFAULT NULL                COMMENT '需求说明',
+    appoint_status  tinyint         DEFAULT 0                 COMMENT '状态 0待处理 1已联系 2已完成 3已取消',
+    handler_id      bigint(20)      DEFAULT NULL                COMMENT '处理人',
+    handler_remark  varchar(500)    DEFAULT NULL                COMMENT '处理备注',
+    create_dept     bigint(20)      DEFAULT NULL                COMMENT '创建部门',
+    create_by       bigint(20)      DEFAULT NULL                COMMENT '创建者',
+    create_time     datetime        DEFAULT NULL                COMMENT '创建时间',
+    update_by       bigint(20)      DEFAULT NULL                COMMENT '更新者',
+    update_time     datetime        DEFAULT NULL                COMMENT '更新时间',
+    del_flag        char(1)         DEFAULT '0'                 COMMENT '删除标志',
+    PRIMARY KEY (id)
+) ENGINE=InnoDB COMMENT='特教预约咨询表';
+
+-- 小程序客户端（grant_type 含 xcx）
+INSERT INTO sys_client VALUES (
+    1762000000000000003, 'special_xcx_client_id', 'xcx', 'special_xcx_secret',
+    'password,xcx,sms', 'xcx', null, null, 1800, 604800, '0', '0',
+    1761000000000000103, 1761100000000000001, sysdate(), 1761100000000000001, sysdate()
+) ON DUPLICATE KEY UPDATE client_key = 'xcx';
+
+-- 四类角色
+INSERT INTO sys_role VALUES (1763000000000000001, '家长', 'special_parent', 3, '5', 1, 1, '0', '0', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '自闭症家庭家长角色') ON DUPLICATE KEY UPDATE role_name = '家长';
+INSERT INTO sys_role VALUES (1763000000000000002, '特教老师', 'special_teacher', 4, '5', 1, 1, '0', '0', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '特教老师角色') ON DUPLICATE KEY UPDATE role_name = '特教老师';
+INSERT INTO sys_role VALUES (1763000000000000003, '机构管理员', 'special_org_admin', 5, '5', 1, 1, '0', '0', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '康复机构管理员') ON DUPLICATE KEY UPDATE role_name = '机构管理员';
+INSERT INTO sys_role VALUES (1763000000000000004, '学校管理员', 'special_school_admin', 6, '5', 1, 1, '0', '0', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '特教学校管理员') ON DUPLICATE KEY UPDATE role_name = '学校管理员';
+
+-- 顶级菜单：特教平台
+INSERT INTO sys_menu VALUES (1764000000000000001, '特教平台', 0, 6, 'special', null, '', 'N', 'Y', 'M', '0', '0', '', 'education', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '特殊教育平台') ON DUPLICATE KEY UPDATE menu_name = '特教平台';
+
+INSERT INTO sys_menu VALUES (1764000000000000002, '资源管理', 1764000000000000001, 1, 'resource', 'special/resource/index', '', 'N', 'Y', 'C', '0', '0', 'special:resource:list', 'documentation', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '资源管理';
+INSERT INTO sys_menu VALUES (1764000000000000003, '机构管理', 1764000000000000001, 2, 'organization', 'special/organization/index', '', 'N', 'Y', 'C', '0', '0', 'special:organization:list', 'tree', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '机构管理';
+INSERT INTO sys_menu VALUES (1764000000000000004, '预约管理', 1764000000000000001, 3, 'appointment', 'special/appointment/index', '', 'N', 'Y', 'C', '0', '0', 'special:appointment:list', 'form', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '预约管理';
+
+-- 资源管理按钮权限
+INSERT INTO sys_menu VALUES (1764000000000000011, '资源查询', 1764000000000000002, 1, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:resource:query', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '资源查询';
+INSERT INTO sys_menu VALUES (1764000000000000012, '资源新增', 1764000000000000002, 2, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:resource:add', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '资源新增';
+INSERT INTO sys_menu VALUES (1764000000000000013, '资源修改', 1764000000000000002, 3, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:resource:edit', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '资源修改';
+INSERT INTO sys_menu VALUES (1764000000000000014, '资源删除', 1764000000000000002, 4, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:resource:remove', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '资源删除';
+
+-- 机构管理按钮权限
+INSERT INTO sys_menu VALUES (1764000000000000021, '机构查询', 1764000000000000003, 1, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:organization:query', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '机构查询';
+INSERT INTO sys_menu VALUES (1764000000000000022, '机构新增', 1764000000000000003, 2, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:organization:add', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '机构新增';
+INSERT INTO sys_menu VALUES (1764000000000000023, '机构修改', 1764000000000000003, 3, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:organization:edit', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '机构修改';
+INSERT INTO sys_menu VALUES (1764000000000000024, '机构删除', 1764000000000000003, 4, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:organization:remove', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '机构删除';
+
+-- 预约管理按钮权限
+INSERT INTO sys_menu VALUES (1764000000000000031, '预约查询', 1764000000000000004, 1, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:appointment:query', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '预约查询';
+INSERT INTO sys_menu VALUES (1764000000000000032, '预约处理', 1764000000000000004, 2, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:appointment:edit', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '预约处理';
+INSERT INTO sys_menu VALUES (1764000000000000033, '预约删除', 1764000000000000004, 3, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:appointment:remove', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '预约删除';
+
+-- 字典：资源类型
+INSERT INTO sys_dict_type VALUES (1765000000000000001, '特教资源类型', 'special_resource_type', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '特教资源类型') ON DUPLICATE KEY UPDATE dict_name = '特教资源类型';
+INSERT INTO sys_dict_data VALUES (1765000000000000011, 1, '课程', 'course', 'special_resource_type', '', 'primary', 'N', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE dict_label = '课程';
+INSERT INTO sys_dict_data VALUES (1765000000000000012, 2, '工具', 'tool', 'special_resource_type', '', 'success', 'N', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE dict_label = '工具';
+INSERT INTO sys_dict_data VALUES (1765000000000000013, 3, '老师', 'teacher', 'special_resource_type', '', 'info', 'N', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE dict_label = '老师';
+INSERT INTO sys_dict_data VALUES (1765000000000000014, 4, '机构', 'org', 'special_resource_type', '', 'warning', 'N', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE dict_label = '机构';
+INSERT INTO sys_dict_data VALUES (1765000000000000015, 5, '评估', 'assessment', 'special_resource_type', '', 'danger', 'N', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE dict_label = '评估';
+
+-- 示例数据
+INSERT INTO special_resource VALUES
+(1766000000000000001, '感觉统合训练入门课', 'course', '感统', '面向自闭症儿童的感统训练基础课程', '系统介绍感统训练理论与家庭练习方法。', null, null, '阳光特教中心', '13800000001', '广州市', 299.00, 1, 0, 1761000000000000103, 1761100000000000001, sysdate(), null, null, '0'),
+(1766000000000000002, '社交故事工具包', 'tool', '社交', '帮助儿童理解社交场景的图文工具', '包含20套常用社交故事模板。', null, null, '星语康复', '13800000002', '深圳市', 0.00, 1, 0, 1761000000000000103, 1761100000000000001, sysdate(), null, null, '0'),
+(1766000000000000003, '语言干预专家-李老师', 'teacher', '语言', '10年特教语言干预经验', '擅长儿童语言发育迟缓与AAC辅助沟通。', null, null, '李老师', '13800000003', '北京市', 500.00, 1, 0, 1761000000000000103, 1761100000000000001, sysdate(), null, null, '0');
+
+INSERT INTO special_organization VALUES
+(1767000000000000001, '阳光特教中心', 'org', 'GZ2024001', null, '广州市天河区体育西路100号', '广州市', '张主任', '13800000001', '专注自闭症儿童康复训练', 1, 1, 1761000000000000103, 1761100000000000001, sysdate(), null, null, '0'),
+(1767000000000000002, '希望特教学校', 'school', 'SZ2024002', null, '深圳市南山区科技园路88号', '深圳市', '王校长', '13800000002', '融合教育示范学校', 1, 1, 1761000000000000103, 1761100000000000001, sysdate(), null, null, '0');

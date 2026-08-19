@@ -10,25 +10,30 @@ pipeline {
     githubPush()
   }
 
-  when {
-    anyOf {
-      changeset pattern: 'apps/admin/.*', comparator: 'REGEXP'
-      changeset pattern: 'jenkins/Jenkinsfile.admin', comparator: 'REGEXP'
-    }
-  }
-
   tools {
     nodejs 'node-20'
   }
 
   stages {
     stage('Checkout') {
+      when {
+        anyOf {
+          changeset pattern: 'apps/admin/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.admin', comparator: 'REGEXP'
+        }
+      }
       steps {
         checkout scm
       }
     }
 
     stage('Build') {
+      when {
+        anyOf {
+          changeset pattern: 'apps/admin/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.admin', comparator: 'REGEXP'
+        }
+      }
       steps {
         dir('apps/admin') {
           sh 'npm ci'
@@ -38,12 +43,24 @@ pipeline {
     }
 
     stage('Deploy') {
+      when {
+        anyOf {
+          changeset pattern: 'apps/admin/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.admin', comparator: 'REGEXP'
+        }
+      }
       steps {
         sh 'rsync -a --delete apps/admin/dist/ /var/www/admin/'
       }
     }
 
     stage('Verify') {
+      when {
+        anyOf {
+          changeset pattern: 'apps/admin/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.admin', comparator: 'REGEXP'
+        }
+      }
       steps {
         sh "curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1/login | grep 200"
       }

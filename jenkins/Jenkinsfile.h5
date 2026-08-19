@@ -10,39 +10,44 @@ pipeline {
     githubPush()
   }
 
-  when {
-    anyOf {
-      changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
-      changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
-    }
-  }
-
   tools {
     nodejs 'node-20'
   }
 
   stages {
     stage('Checkout') {
+      when {
+        anyOf {
+          changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
+        }
+      }
       steps {
         checkout scm
       }
     }
 
     stage('Prepare env') {
+      when {
+        anyOf {
+          changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
+        }
+      }
       steps {
         dir('apps/mobile') {
-          sh '''
-            cp env/.env.production.example env/.env.production
-            # 若 Jenkins 配置了 Credential file 'mobile-env-production'，可改为：
-            # withCredentials([file(credentialsId: 'mobile-env-production', variable: 'ENV_FILE')]) {
-            #   cp "$ENV_FILE" env/.env.production
-            # }
-          '''
+          sh 'cp env/.env.production.example env/.env.production'
         }
       }
     }
 
     stage('Build') {
+      when {
+        anyOf {
+          changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
+        }
+      }
       steps {
         dir('apps/mobile') {
           sh 'pnpm install --frozen-lockfile'
@@ -52,12 +57,24 @@ pipeline {
     }
 
     stage('Deploy') {
+      when {
+        anyOf {
+          changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
+        }
+      }
       steps {
         sh 'rsync -a --delete apps/mobile/dist/build/h5/ /var/www/h5/'
       }
     }
 
     stage('Verify') {
+      when {
+        anyOf {
+          changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
+        }
+      }
       steps {
         sh "curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1/h5/ | grep -E '200|304'"
       }

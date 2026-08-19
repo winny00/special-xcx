@@ -10,13 +10,6 @@ pipeline {
     githubPush()
   }
 
-  when {
-    anyOf {
-      changeset pattern: 'server/.*', comparator: 'REGEXP'
-      changeset pattern: 'jenkins/Jenkinsfile.server', comparator: 'REGEXP'
-    }
-  }
-
   tools {
     jdk 'jdk-21'
     maven 'maven-3'
@@ -30,12 +23,24 @@ pipeline {
 
   stages {
     stage('Checkout') {
+      when {
+        anyOf {
+          changeset pattern: 'server/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.server', comparator: 'REGEXP'
+        }
+      }
       steps {
         checkout scm
       }
     }
 
     stage('Build') {
+      when {
+        anyOf {
+          changeset pattern: 'server/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.server', comparator: 'REGEXP'
+        }
+      }
       steps {
         dir('server') {
           sh 'mvn clean package -DskipTests -pl ruoyi-admin -am -T 1C'
@@ -44,6 +49,12 @@ pipeline {
     }
 
     stage('Deploy') {
+      when {
+        anyOf {
+          changeset pattern: 'server/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.server', comparator: 'REGEXP'
+        }
+      }
       steps {
         sh '''
           TS=$(date +%Y%m%d-%H%M%S)
@@ -57,6 +68,12 @@ pipeline {
     }
 
     stage('Health Check') {
+      when {
+        anyOf {
+          changeset pattern: 'server/.*', comparator: 'REGEXP'
+          changeset pattern: 'jenkins/Jenkinsfile.server', comparator: 'REGEXP'
+        }
+      }
       steps {
         sh '''
           sleep 10

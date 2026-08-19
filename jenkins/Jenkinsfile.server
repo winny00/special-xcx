@@ -1,0 +1,74 @@
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+  }
+
+  triggers {
+    githubPush()
+  }
+
+  when {
+    anyOf {
+      changeset pattern: 'server/.*', comparator: 'REGEXP'
+      changeset pattern: 'jenkins/Jenkinsfile.server', comparator: 'REGEXP'
+    }
+  }
+
+  tools {
+    jdk 'jdk-21'
+    maven 'maven-3'
+  }
+
+  environment {
+    JAR_NAME = 'ruoyi-admin.jar'
+    DEPLOY_DIR = '/opt/special/server'
+    BACKUP_DIR = '/opt/special/backups'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Build') {
+      steps {
+        dir('server') {
+          sh 'mvn clean package -DskipTests -pl ruoyi-admin -am -T 1C'
+        }
+      }
+    }
+
+    stage('Deploy') {
+      steps {
+        sh '''
+          TS=$(date +%Y%m%d-%H%M%S)
+          if [ -f "${DEPLOY_DIR}/${JAR_NAME}" ]; then
+            sudo cp "${DEPLOY_DIR}/${JAR_NAME}" "${BACKUP_DIR}/${JAR_NAME}.${TS}"
+          fi
+          sudo cp "server/ruoyi-admin/target/${JAR_NAME}" "${DEPLOY_DIR}/${JAR_NAME}"
+          sudo systemctl restart special-server
+        '''
+      }
+    }
+
+    stage('Health Check') {
+      steps {
+        sh '''
+          sleep 10
+          curl -sf "http://127.0.0.1/special/mobile/resource/list?pageNum=1&pageSize=1" | grep -q '"code":200'
+        '''
+      }
+    }
+  }
+
+  post {
+    failure {
+      echo 'Backend deploy failed. Check /opt/special/server/logs/app.log'
+    }
+  }
+}

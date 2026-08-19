@@ -7,3 +7,14 @@ unpackage/
 .env.*
 !.env.example
 .superpowers/
+
+# 微信 CI 上传私钥（仅 Jenkins Credentials）
+apps/mobile/private*.key
+apps/mobile/private.key
+
+# 移动端生产 env（Jenkins 构建时写入）
+apps/mobile/env/.env.production
+!apps/mobile/env/.env.production.example
+
+# Jenkins 本地缓存
+.jenkins/

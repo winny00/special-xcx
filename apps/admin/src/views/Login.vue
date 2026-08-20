@@ -20,6 +20,9 @@ interface LoginVo {
 }
 
 async function handleLogin() {
+  if (loading.value) {
+    return
+  }
   if (!form.username || !form.password) {
     ElMessage.warning('请输入用户名和密码')
     return
@@ -63,12 +66,20 @@ async function handleLogin() {
         <p class="form-hint">使用管理员账号进入后台</p>
         <el-form @submit.prevent="handleLogin">
           <el-form-item>
-            <el-input v-model="form.username" size="large" placeholder="用户名" />
+            <el-input v-model="form.username" size="large" placeholder="用户名" autocomplete="username" />
           </el-form-item>
           <el-form-item>
-            <el-input v-model="form.password" size="large" type="password" show-password placeholder="密码" />
+            <el-input
+              v-model="form.password"
+              size="large"
+              type="password"
+              show-password
+              placeholder="密码"
+              autocomplete="current-password"
+              @keyup.enter="handleLogin"
+            />
           </el-form-item>
-          <el-button type="primary" size="large" class="submit-btn" :loading="loading" @click="handleLogin">
+          <el-button type="primary" size="large" class="submit-btn" native-type="submit" :loading="loading">
             登录
           </el-button>
         </el-form>

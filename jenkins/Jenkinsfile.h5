@@ -10,8 +10,8 @@ pipeline {
     githubPush()
   }
 
-  tools {
-    nodejs 'node-20'
+  environment {
+    PATH = "/usr/local/bin:/usr/bin:${env.PATH}"
   }
 
   stages {
@@ -20,6 +20,7 @@ pipeline {
         anyOf {
           changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
           changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
+          triggeredBy 'UserIdCause'
         }
       }
       steps {
@@ -32,6 +33,7 @@ pipeline {
         anyOf {
           changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
           changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
+          triggeredBy 'UserIdCause'
         }
       }
       steps {
@@ -46,6 +48,7 @@ pipeline {
         anyOf {
           changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
           changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
+          triggeredBy 'UserIdCause'
         }
       }
       steps {
@@ -61,6 +64,7 @@ pipeline {
         anyOf {
           changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
           changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
+          triggeredBy 'UserIdCause'
         }
       }
       steps {
@@ -73,6 +77,7 @@ pipeline {
         anyOf {
           changeset pattern: 'apps/mobile/.*', comparator: 'REGEXP'
           changeset pattern: 'jenkins/Jenkinsfile.h5', comparator: 'REGEXP'
+          triggeredBy 'UserIdCause'
         }
       }
       steps {

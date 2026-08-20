@@ -14,8 +14,8 @@ pipeline {
 
   // 无 triggers — 仅手动 Build with Parameters
 
-  tools {
-    nodejs 'node-20'
+  environment {
+    PATH = "/usr/local/bin:/usr/bin:${env.PATH}"
   }
 
   stages {

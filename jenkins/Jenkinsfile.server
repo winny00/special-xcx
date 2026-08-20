@@ -10,12 +10,9 @@ pipeline {
     githubPush()
   }
 
-  tools {
-    jdk 'jdk-21'
-    maven 'maven-3'
-  }
-
   environment {
+    PATH = "/usr/local/bin:/usr/bin:${env.PATH}"
+    JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64'
     JAR_NAME = 'ruoyi-admin.jar'
     DEPLOY_DIR = '/opt/special/server'
     BACKUP_DIR = '/opt/special/backups'
@@ -27,6 +24,7 @@ pipeline {
         anyOf {
           changeset pattern: 'server/.*', comparator: 'REGEXP'
           changeset pattern: 'jenkins/Jenkinsfile.server', comparator: 'REGEXP'
+          triggeredBy 'UserIdCause'
         }
       }
       steps {
@@ -39,6 +37,7 @@ pipeline {
         anyOf {
           changeset pattern: 'server/.*', comparator: 'REGEXP'
           changeset pattern: 'jenkins/Jenkinsfile.server', comparator: 'REGEXP'
+          triggeredBy 'UserIdCause'
         }
       }
       steps {
@@ -53,6 +52,7 @@ pipeline {
         anyOf {
           changeset pattern: 'server/.*', comparator: 'REGEXP'
           changeset pattern: 'jenkins/Jenkinsfile.server', comparator: 'REGEXP'
+          triggeredBy 'UserIdCause'
         }
       }
       steps {
@@ -72,6 +72,7 @@ pipeline {
         anyOf {
           changeset pattern: 'server/.*', comparator: 'REGEXP'
           changeset pattern: 'jenkins/Jenkinsfile.server', comparator: 'REGEXP'
+          triggeredBy 'UserIdCause'
         }
       }
       steps {

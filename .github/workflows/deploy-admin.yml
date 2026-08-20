@@ -61,10 +61,18 @@ jobs:
           esac
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          rsync -az --delete -e "ssh -i $KEY_FILE -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
-            apps/admin/dist/ \
-            "${ECS_USERNAME}@${ECS_HOST}:/var/www/admin/"
-          rm -f "$KEY_FILE"
+          ECS_HOST=$(printf '%s' "$ECS_HOST" | tr -d '\r\n[:space:]')
+          ECS_USERNAME=$(printf '%s' "$ECS_USERNAME" | tr -d '\r\n[:space:]')
+          RSH_FILE=$(mktemp)
+          cat > "$RSH_FILE" <<EOF
+#!/bin/sh
+exec ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new "\$@"
+EOF
+          chmod +x "$RSH_FILE"
+          REMOTE="${ECS_USERNAME}@${ECS_HOST}"
+          "$RSH_FILE" "$REMOTE" 'mkdir -p /var/www/admin'
+          rsync -az --delete -e "$RSH_FILE" apps/admin/dist/ "${REMOTE}:/var/www/admin/"
+          rm -f "$KEY_FILE" "$RSH_FILE"
 
       - name: Verify login page
         run: |

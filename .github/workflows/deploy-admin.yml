@@ -66,15 +66,33 @@ jobs:
           esac
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          ECS_HOST=$(printf '%s' "$ECS_HOST" | tr -d '\r\n ')
-          ECS_USERNAME=$(printf '%s' "$ECS_USERNAME" | tr -d '\r\n ')
-          RSH_FILE=$(mktemp)
-          printf '%s\n' '#!/bin/sh' "exec ssh -i \"$KEY_FILE\" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \"\$@\"" > "$RSH_FILE"
-          chmod +x "$RSH_FILE"
-          REMOTE="${ECS_USERNAME}@${ECS_HOST}"
-          "$RSH_FILE" "$REMOTE" 'rm -rf /var/www/admin && mkdir -p /var/www/admin'
-          tar -C apps/admin/dist -czf - . | "$RSH_FILE" "$REMOTE" 'tar -C /var/www/admin -xzf -'
-          rm -f "$KEY_FILE" "$RSH_FILE"
+          # GitHub secrets often include quotes, BOM, user@host, or :22 — OpenSSH then says
+          # "hostname contains invalid characters".
+          ECS_HOST=$(printf '%s' "$ECS_HOST" | tr -d '\r\n\t ' | sed $'s/\xef\xbb\xbf//g')
+          ECS_USERNAME=$(printf '%s' "$ECS_USERNAME" | tr -d '\r\n\t ' | sed $'s/\xef\xbb\xbf//g')
+          ECS_HOST="${ECS_HOST#\"}"; ECS_HOST="${ECS_HOST%\"}"
+          ECS_HOST="${ECS_HOST#\'}"; ECS_HOST="${ECS_HOST%\'}"
+          ECS_USERNAME="${ECS_USERNAME#\"}"; ECS_USERNAME="${ECS_USERNAME%\"}"
+          ECS_USERNAME="${ECS_USERNAME#\'}"; ECS_USERNAME="${ECS_USERNAME%\'}"
+          case "$ECS_USERNAME" in *@*) ECS_USERNAME="${ECS_USERNAME%%@*}" ;; esac
+          case "$ECS_HOST" in *@*) ECS_HOST="${ECS_HOST##*@}" ;; esac
+          case "$ECS_HOST" in *:*) ECS_HOST="${ECS_HOST%%:*}" ;; esac
+          echo "SSH target ${ECS_USERNAME}@${ECS_HOST}"
+          printf 'host bytes:'
+          printf '%s' "$ECS_HOST" | od -An -tx1
+          case "$ECS_HOST" in
+            ''|*[!0-9A-Za-z.-]*)
+              echo "ECS_HOST must be an IP or hostname only (example 8.134.110.218), not user@host or a URL"
+              exit 1
+              ;;
+          esac
+          ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+            "${ECS_USERNAME}@${ECS_HOST}" \
+            'rm -rf /var/www/admin && mkdir -p /var/www/admin'
+          tar -C apps/admin/dist -czf - . | ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+            "${ECS_USERNAME}@${ECS_HOST}" \
+            'tar -C /var/www/admin -xzf -'
+          rm -f "$KEY_FILE"
 
       - name: Verify login page
         run: |

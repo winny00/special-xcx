@@ -27,9 +27,10 @@
 - Definition: **Pipeline script from SCM**
 - SCM: Git
 - Repository URL: `https://github.com/<YOUR_GITHUB_USER>/special-xcx.git`
-- Credentials: `github-pat-readonly`
+- Credentials: `github-pat-readonly`（必须是 **Username with password**：用户名 GitHub 账号，密码为 PAT；不要用 Secret text）
 - Branch Specifier: `*/main`
 - Script Path: 见上表
+- **取消勾选 Lightweight checkout**（否则会走 `GitSCMFileSystem` 缓存 `git fetch --prune --tags`，私有仓库上常报 status 128、stderr 为空）
 
 ### Build Triggers（自动 Job 三条）
 
@@ -89,6 +90,7 @@
 | 现象 | 检查 |
 |------|------|
 | clone 403 | PAT 权限、Credential ID |
+| `git fetch` status 128 且 stderr 为空（堆栈含 `GitSCMFileSystem`） | 取消 Lightweight checkout；凭证改为 Username with password；必要时清 `/var/lib/jenkins/caches/git-*` 后重试 |
 | mvn OOM | ECS 内存；Maven `-T 1C` 已在 Jenkinsfile |
 | rsync 权限 denied | jenkins 是否在 www-data 组 |
 | sudo cp jar 失败 | `/etc/sudoers.d/jenkins-deploy` |

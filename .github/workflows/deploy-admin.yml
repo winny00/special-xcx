@@ -1,0 +1,64 @@
+# 管理后台：在 GitHub 云上构建，再 rsync 到 ECS。不要在 1.6G 生产机上跑 Jenkins/npm。
+#
+# 仓库 Settings → Secrets and variables → Actions 需要：
+#   ECS_HOST       例：8.134.110.218
+#   ECS_USERNAME   例：root
+#   ECS_SSH_KEY    能登录 ECS 的私钥全文（含 BEGIN/END）
+# ECS 安全组需放行来自公网的 22（GitHub-hosted runner 出口 IP 不固定）。
+# 发布后请在 ECS 上 systemctl stop jenkins && systemctl disable jenkins
+
+name: Deploy admin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/admin/**'
+      - '.github/workflows/deploy-admin.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: apps/admin/package-lock.json
+
+      - name: Install and build
+        working-directory: apps/admin
+        run: |
+          npm ci --no-audit --no-fund
+          npx vite build
+
+      - name: Deploy dist to ECS
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+          ECS_USERNAME: ${{ secrets.ECS_USERNAME }}
+          ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$ECS_HOST"
+          test -n "$ECS_USERNAME"
+          test -n "$ECS_SSH_KEY"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$ECS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$ECS_HOST" >> ~/.ssh/known_hosts
+          rsync -az --delete -e 'ssh -o StrictHostKeyChecking=yes' \
+            apps/admin/dist/ \
+            "${ECS_USERNAME}@${ECS_HOST}:/var/www/admin/"
+
+      - name: Verify login page
+        run: |
+          curl -sf -o /dev/null -w '%{http_code}' "http://${{ secrets.ECS_HOST }}/login" | grep 200

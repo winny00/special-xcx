@@ -1,3 +1,5 @@
+// 管理后台发布已改到 GitHub Actions（.github/workflows/deploy-admin.yml）。
+// 这台 1.6G ECS 上不要再点本 Job 的 Build，否则会 504。
 pipeline {
   agent any
 

@@ -22,3 +22,4 @@ apps/mobile/env/.env.production
 
 # Jenkins 本地缓存
 .jenkins/
+apps/admin/.ci-lock-hash

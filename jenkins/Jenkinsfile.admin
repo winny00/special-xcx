@@ -12,22 +12,13 @@ pipeline {
 
   environment {
     PATH = "/usr/local/bin:/usr/bin:${env.PATH}"
+    npm_config_cache = '/var/lib/jenkins/.npm'
+    npm_config_audit = 'false'
+    npm_config_fund = 'false'
+    npm_config_prefer_offline = 'true'
   }
 
   stages {
-    stage('Checkout') {
-      when {
-        anyOf {
-          changeset pattern: 'apps/admin/.*', comparator: 'REGEXP'
-          changeset pattern: 'jenkins/Jenkinsfile.admin', comparator: 'REGEXP'
-          triggeredBy 'UserIdCause'
-        }
-      }
-      steps {
-        checkout scm
-      }
-    }
-
     stage('Build') {
       when {
         anyOf {
@@ -38,8 +29,18 @@ pipeline {
       }
       steps {
         dir('apps/admin') {
-          sh 'npm ci'
-          sh 'npm run build'
+          sh '''
+            set -euo pipefail
+            mkdir -p "$npm_config_cache"
+            LOCK_HASH=$(sha256sum package-lock.json | awk '{print $1}')
+            if [ -d node_modules ] && [ -f .ci-lock-hash ] && [ "$(cat .ci-lock-hash)" = "$LOCK_HASH" ]; then
+              echo "package-lock.json unchanged, skip npm ci"
+            else
+              npm ci --no-audit --no-fund --prefer-offline
+              echo "$LOCK_HASH" > .ci-lock-hash
+            fi
+            npx vite build
+          '''
         }
       }
     }

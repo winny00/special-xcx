@@ -66,23 +66,33 @@ jobs:
           esac
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          # GitHub secrets often include quotes, BOM, user@host, or :22 — OpenSSH then says
-          # "hostname contains invalid characters".
+          looks_like_key() {
+            case "$1" in
+              *BEGIN*|*PRIVATE*|*OPENSSH*|*END*KEY*) return 0 ;;
+            esac
+            [ "${#1}" -gt 64 ]
+          }
           ECS_HOST=$(printf '%s' "$ECS_HOST" | tr -d '\r\n\t ' | sed $'s/\xef\xbb\xbf//g')
           ECS_USERNAME=$(printf '%s' "$ECS_USERNAME" | tr -d '\r\n\t ' | sed $'s/\xef\xbb\xbf//g')
           ECS_HOST="${ECS_HOST#\"}"; ECS_HOST="${ECS_HOST%\"}"
           ECS_HOST="${ECS_HOST#\'}"; ECS_HOST="${ECS_HOST%\'}"
           ECS_USERNAME="${ECS_USERNAME#\"}"; ECS_USERNAME="${ECS_USERNAME%\"}"
           ECS_USERNAME="${ECS_USERNAME#\'}"; ECS_USERNAME="${ECS_USERNAME%\'}"
+          if looks_like_key "$ECS_HOST"; then
+            echo "ECS_HOST secret is a private key, not an IP. Using 8.134.110.218. Please set ECS_HOST=8.134.110.218"
+            ECS_HOST=8.134.110.218
+          fi
+          if looks_like_key "$ECS_USERNAME"; then
+            echo "ECS_USERNAME secret is a private key, not a user. Using root. Please set ECS_USERNAME=root"
+            ECS_USERNAME=root
+          fi
           case "$ECS_USERNAME" in *@*) ECS_USERNAME="${ECS_USERNAME%%@*}" ;; esac
           case "$ECS_HOST" in *@*) ECS_HOST="${ECS_HOST##*@}" ;; esac
           case "$ECS_HOST" in *:*) ECS_HOST="${ECS_HOST%%:*}" ;; esac
           echo "SSH target ${ECS_USERNAME}@${ECS_HOST}"
-          printf 'host bytes:'
-          printf '%s' "$ECS_HOST" | od -An -tx1
           case "$ECS_HOST" in
             ''|*[!0-9A-Za-z.-]*)
-              echo "ECS_HOST must be an IP or hostname only (example 8.134.110.218), not user@host or a URL"
+              echo "ECS_HOST must be an IP or hostname only (example 8.134.110.218)"
               exit 1
               ;;
           esac
@@ -96,4 +106,4 @@ jobs:
 
       - name: Verify login page
         run: |
-          curl -sf -o /dev/null -w '%{http_code}' "http://${{ secrets.ECS_HOST }}/login" | grep 200
+          curl -sf -o /dev/null -w '%{http_code}' "http://8.134.110.218/login" | grep 200

@@ -36,9 +36,9 @@ pipeline {
             mkdir -p "$npm_config_cache"
             LOCK_HASH=$(sha256sum package-lock.json | awk '{print $1}')
             if [ -d node_modules ] && [ -f .ci-lock-hash ] && [ "$(cat .ci-lock-hash)" = "$LOCK_HASH" ]; then
-              echo "package-lock.json unchanged, skip npm ci"
+              echo "package-lock.json unchanged, skip npm install"
             else
-              npm ci --no-audit --no-fund --prefer-offline
+              npm install --no-audit --no-fund --prefer-offline
               echo "$LOCK_HASH" > .ci-lock-hash
             fi
             npx vite build

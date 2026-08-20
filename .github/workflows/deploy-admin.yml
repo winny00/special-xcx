@@ -61,11 +61,7 @@ jobs:
           esac
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          if ! ssh-keyscan -T 15 -H "$ECS_HOST" >> ~/.ssh/known_hosts; then
-            echo "GitHub cannot reach ${ECS_HOST}:22. Open ECS security group inbound TCP 22 from 0.0.0.0/0 (key login only)."
-            exit 1
-          fi
-          rsync -az --delete -e "ssh -i $KEY_FILE -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
+          rsync -az --delete -e "ssh -i $KEY_FILE -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
             apps/admin/dist/ \
             "${ECS_USERNAME}@${ECS_HOST}:/var/www/admin/"
           rm -f "$KEY_FILE"

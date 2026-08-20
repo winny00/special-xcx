@@ -30,7 +30,7 @@ pipeline {
       steps {
         dir('apps/admin') {
           sh '''
-            set -euo pipefail
+            set -eu
             mkdir -p "$npm_config_cache"
             LOCK_HASH=$(sha256sum package-lock.json | awk '{print $1}')
             if [ -d node_modules ] && [ -f .ci-lock-hash ] && [ "$(cat .ci-lock-hash)" = "$LOCK_HASH" ]; then

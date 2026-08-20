@@ -69,10 +69,7 @@ jobs:
           ECS_HOST=$(printf '%s' "$ECS_HOST" | tr -d '\r\n ')
           ECS_USERNAME=$(printf '%s' "$ECS_USERNAME" | tr -d '\r\n ')
           RSH_FILE=$(mktemp)
-          cat > "$RSH_FILE" <<EOF
-#!/bin/sh
-exec ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new "\$@"
-EOF
+          printf '%s\n' '#!/bin/sh' "exec ssh -i \"$KEY_FILE\" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \"\$@\"" > "$RSH_FILE"
           chmod +x "$RSH_FILE"
           REMOTE="${ECS_USERNAME}@${ECS_HOST}"
           "$RSH_FILE" "$REMOTE" 'rm -rf /var/www/admin && mkdir -p /var/www/admin'

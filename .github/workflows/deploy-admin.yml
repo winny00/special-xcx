@@ -16,6 +16,11 @@ on:
       - 'apps/admin/**'
       - '.github/workflows/deploy-admin.yml'
   workflow_dispatch:
+    inputs:
+      reason:
+        description: 手动发布管理后台
+        required: false
+        default: manual
 
 permissions:
   contents: read

@@ -4,6 +4,7 @@ pipeline {
   options {
     timestamps()
     disableConcurrentBuilds()
+    timeout(time: 12, unit: 'MINUTES')
   }
 
   triggers {
@@ -16,6 +17,7 @@ pipeline {
     npm_config_audit = 'false'
     npm_config_fund = 'false'
     npm_config_prefer_offline = 'true'
+    NODE_OPTIONS = '--max-old-space-size=384'
   }
 
   stages {
@@ -67,7 +69,17 @@ pipeline {
         }
       }
       steps {
-        sh "curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1/login | grep 200"
+        sh '''
+          set -eu
+          LOGIN_CODE=$(curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1/login)
+          [ "$LOGIN_CODE" = "200" ]
+          curl -sf 'http://127.0.0.1/auth/login' -X POST \
+            -H 'Content-Type: application/json' \
+            -H 'Clientid: e5cd7e4891bf95d1d19206ce24a7b32e' \
+            -d '{"clientId":"e5cd7e4891bf95d1d19206ce24a7b32e","grantType":"password","username":"admin","password":"invalid"}' \
+            | grep -q '"code":'
+          curl -sf 'http://127.0.0.1/special/mobile/resource/list?pageNum=1&pageSize=1' | grep -q '"code":200'
+        '''
       }
     }
   }

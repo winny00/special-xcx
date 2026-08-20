@@ -55,6 +55,19 @@ export interface ListQuery {
   [key: string]: unknown
 }
 
+export interface DashboardStats {
+  resourceTotal: number
+  resourceByType: Record<string, number>
+  resourceDraftCount: number
+  orgAuditPending: number
+  appointmentPending: number
+  appointmentToday: number
+}
+
+export function getDashboardStats() {
+  return request.get<DashboardStats>('/special/dashboard/stats')
+}
+
 // Resource CRUD
 export function listResources(params?: ListQuery) {
   return request.get<PageResult<SpecialResource>>('/special/resource/list', { params })

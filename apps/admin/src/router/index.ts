@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@/api/request'
 
+const RESOURCE_TYPES = ['course', 'tool', 'teacher', 'assessment'] as const
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -12,22 +14,47 @@ const router = createRouter({
     },
     {
       path: '/',
-      redirect: '/resource',
+      redirect: '/dashboard',
+    },
+    {
+      path: '/dashboard',
+      name: 'Dashboard',
+      component: () => import('@/views/dashboard/Index.vue'),
+      meta: { title: '数据概览' },
     },
     {
       path: '/resource',
-      name: 'Resource',
+      redirect: '/resource/course',
+    },
+    {
+      path: '/resource/:type',
+      name: 'ResourceByType',
       component: () => import('@/views/resource/Index.vue'),
+      beforeEnter: (to) => {
+        const type = to.params.type as string
+        if (!RESOURCE_TYPES.includes(type as typeof RESOURCE_TYPES[number])) {
+          return '/resource/course'
+        }
+      },
+      meta: { title: '资源管理' },
     },
     {
       path: '/organization',
       name: 'Organization',
       component: () => import('@/views/organization/Index.vue'),
+      meta: { title: '机构管理' },
     },
     {
       path: '/appointment',
       name: 'Appointment',
       component: () => import('@/views/appointment/Index.vue'),
+      meta: { title: '预约管理' },
+    },
+    {
+      path: '/audit',
+      name: 'Audit',
+      component: () => import('@/views/audit/Index.vue'),
+      meta: { title: '审核中心' },
     },
   ],
 })
@@ -38,8 +65,9 @@ router.beforeEach((to) => {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
   if (to.path === '/login' && token) {
-    return '/resource'
+    return '/dashboard'
   }
 })
 
+export { RESOURCE_TYPES }
 export default router

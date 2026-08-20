@@ -82,16 +82,16 @@ onMounted(() => {
         class="side-menu"
       >
         <el-menu-item index="/dashboard">
-          <span class="menu-svg" aria-hidden="true">
+          <i class="menu-svg" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" /></svg>
-          </span>
+          </i>
           <template #title>数据概览</template>
         </el-menu-item>
         <el-sub-menu index="resource-group">
           <template #title>
-            <span class="menu-svg" aria-hidden="true">
+            <i class="menu-svg" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
-            </span>
+            </i>
             <span>资源对接</span>
           </template>
           <el-menu-item index="/resource/course">课程管理</el-menu-item>
@@ -100,21 +100,21 @@ onMounted(() => {
           <el-menu-item index="/resource/assessment">评估管理</el-menu-item>
         </el-sub-menu>
         <el-menu-item index="/organization">
-          <span class="menu-svg" aria-hidden="true">
+          <i class="menu-svg" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /></svg>
-          </span>
+          </i>
           <template #title>机构管理</template>
         </el-menu-item>
         <el-menu-item index="/appointment">
-          <span class="menu-svg" aria-hidden="true">
+          <i class="menu-svg" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
-          </span>
+          </i>
           <template #title>预约管理</template>
         </el-menu-item>
         <el-menu-item index="/audit">
-          <span class="menu-svg" aria-hidden="true">
+          <i class="menu-svg" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-          </span>
+          </i>
           <template #title>审核中心</template>
         </el-menu-item>
       </el-menu>
@@ -231,6 +231,8 @@ onMounted(() => {
   height: 18px;
   margin-right: 8px;
   color: #1b7f6b;
+  font-style: normal;
+  flex-shrink: 0;
 }
 .menu-svg svg {
   width: 18px;
@@ -248,6 +250,7 @@ onMounted(() => {
   margin-top: auto;
   padding: 8px;
   border-top: 1px solid #e7f4f0;
+  background: #f4f7f6;
 }
 .sidebar-footer :deep(.el-tooltip__trigger) {
   display: block;
@@ -260,21 +263,25 @@ onMounted(() => {
   width: 100%;
   min-height: 44px;
   padding: 0 12px;
-  border: none;
+  border: 1px solid #e7f4f0;
   border-radius: 8px;
-  background: transparent;
+  background: #fff;
   color: #4f635f;
   font-family: inherit;
   font-size: 14px;
   line-height: 1.5;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 .sidebar-toggle:hover {
-  background: #f4f7f6;
+  background: #e7f4f0;
+  border-color: #c0d9d3;
 }
 .sidebar-toggle--collapsed {
   justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto;
   padding: 0;
 }
 .sidebar-toggle-icon {
@@ -385,7 +392,8 @@ body {
   margin: 16px 0 8px;
   justify-content: flex-end;
 }
-.el-aside .el-menu-item {
+.el-aside .el-menu-item,
+.el-aside .el-sub-menu__title {
   border-radius: 8px;
   margin-bottom: 4px;
 }
@@ -396,5 +404,24 @@ body {
 .el-aside .el-sub-menu__title:hover,
 .el-aside .el-menu-item:hover {
   background: #f4f7f6;
+}
+.el-aside .el-menu--collapse {
+  width: 100%;
+  padding: 8px 4px;
+}
+.el-aside .el-menu--collapse .menu-svg {
+  margin-right: 0;
+}
+.el-aside .el-menu--collapse > .el-menu-item,
+.el-aside .el-menu--collapse > .el-sub-menu > .el-sub-menu__title {
+  padding: 0;
+  justify-content: center;
+}
+.el-aside .el-menu--collapse > .el-menu-item .el-menu-tooltip__trigger {
+  justify-content: center;
+  padding: 0;
+}
+.el-aside .el-menu--collapse .el-sub-menu .el-menu:not(.el-menu--popup):not(.el-menu--popup-container) {
+  display: none;
 }
 </style>

@@ -48,16 +48,27 @@ jobs:
           ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
         run: |
           set -euo pipefail
-          test -n "$ECS_HOST"
-          test -n "$ECS_USERNAME"
-          test -n "$ECS_SSH_KEY"
+          test -n "${ECS_HOST:-}"
+          test -n "${ECS_USERNAME:-}"
+          test -n "${ECS_SSH_KEY:-}"
+          KEY_FILE=$(mktemp)
+          printf '%s\n' "$ECS_SSH_KEY" | tr -d '\r' | sed 's/\\n/\n/g' > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          FIRST=$(head -1 "$KEY_FILE")
+          case "$FIRST" in
+            -----BEGIN*) echo "SSH private key header looks OK" ;;
+            *) echo "ECS_SSH_KEY must be the PRIVATE key (starts with -----BEGIN), not the .pub file"; exit 1 ;;
+          esac
           mkdir -p ~/.ssh
-          printf '%s\n' "$ECS_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$ECS_HOST" >> ~/.ssh/known_hosts
-          rsync -az --delete -e 'ssh -o StrictHostKeyChecking=yes' \
+          chmod 700 ~/.ssh
+          if ! ssh-keyscan -T 15 -H "$ECS_HOST" >> ~/.ssh/known_hosts; then
+            echo "GitHub cannot reach ${ECS_HOST}:22. Open ECS security group inbound TCP 22 from 0.0.0.0/0 (key login only)."
+            exit 1
+          fi
+          rsync -az --delete -e "ssh -i $KEY_FILE -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
             apps/admin/dist/ \
             "${ECS_USERNAME}@${ECS_HOST}:/var/www/admin/"
+          rm -f "$KEY_FILE"
 
       - name: Verify login page
         run: |

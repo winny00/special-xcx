@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" fill="none" aria-hidden="true">
+  <!-- Background blobs -->
+  <circle cx="80" cy="60" r="48" fill="#E7F4F0" opacity="0.8"/>
+  <circle cx="400" cy="300" r="56" fill="#B8D4E8" opacity="0.5"/>
+  <ellipse cx="420" cy="80" rx="36" ry="28" fill="#E7F4F0" opacity="0.6"/>
+
+  <!-- Growth curve chart -->
+  <rect x="48" y="220" width="140" height="90" rx="8" fill="#FFFFFF" stroke="#E7F4F0" stroke-width="2"/>
+  <path d="M68 280 L98 260 L128 248 L158 230 L168 225" stroke="#1B7F6B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="98" cy="260" r="4" fill="#1B7F6B"/>
+  <circle cx="128" cy="248" r="4" fill="#1B7F6B"/>
+  <circle cx="158" cy="230" r="4" fill="#1B7F6B"/>
+  <circle cx="168" cy="225" r="5" fill="#B8D4E8" stroke="#1B7F6B" stroke-width="2"/>
+  <line x1="68" y1="295" x2="168" y2="295" stroke="#E7F4F0" stroke-width="2"/>
+  <line x1="68" y1="240" x2="68" y2="295" stroke="#E7F4F0" stroke-width="2"/>
+
+  <!-- Stack of books -->
+  <rect x="56" y="140" width="52" height="12" rx="2" fill="#1B7F6B"/>
+  <rect x="58" y="152" width="48" height="10" rx="2" fill="#B8D4E8"/>
+  <rect x="60" y="162" width="44" height="10" rx="2" fill="#E7F4F0" stroke="#1B7F6B" stroke-width="1"/>
+  <rect x="62" y="120" width="40" height="20" rx="2" fill="#FFFFFF" stroke="#1B7F6B" stroke-width="2"/>
+  <line x1="72" y1="125" x2="92" y2="125" stroke="#B8D4E8" stroke-width="2"/>
+  <line x1="72" y1="132" x2="88" y2="132" stroke="#E7F4F0" stroke-width="2"/>
+
+  <!-- Stethoscope -->
+  <path d="M320 100 C320 80 340 70 360 80 C380 90 380 120 360 130 C350 135 340 132 335 125" stroke="#1B7F6B" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <circle cx="335" cy="125" r="14" fill="#B8D4E8" stroke="#1B7F6B" stroke-width="3"/>
+  <circle cx="335" cy="125" r="6" fill="#1B7F6B"/>
+  <path d="M320 100 L300 160 L280 175" stroke="#1B7F6B" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M320 100 L340 160 L360 175" stroke="#1B7F6B" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <circle cx="280" cy="175" r="8" fill="#E7F4F0" stroke="#1B7F6B" stroke-width="2"/>
+  <circle cx="360" cy="175" r="8" fill="#E7F4F0" stroke="#1B7F6B" stroke-width="2"/>
+
+  <!-- Person / educator -->
+  <ellipse cx="240" cy="310" rx="52" ry="8" fill="#E7F4F0" opacity="0.8"/>
+  <!-- Body -->
+  <path d="M210 200 C210 175 230 160 250 160 C270 160 290 175 290 200 L295 260 L205 260 Z" fill="#1B7F6B"/>
+  <!-- Collar -->
+  <path d="M225 200 L250 215 L275 200" stroke="#E7F4F0" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- Head -->
+  <circle cx="250" cy="138" r="32" fill="#B8D4E8"/>
+  <!-- Hair -->
+  <path d="M222 130 C225 108 240 98 258 100 C272 102 280 115 278 128" fill="#1B7F6B"/>
+  <!-- Face details -->
+  <circle cx="240" cy="140" r="3" fill="#1C2B28"/>
+  <circle cx="260" cy="140" r="3" fill="#1C2B28"/>
+  <path d="M242 152 Q250 158 258 152" stroke="#1C2B28" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <!-- Arm holding book -->
+  <path d="M205 220 L175 210 L170 195" stroke="#B8D4E8" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <rect x="148" y="178" width="36" height="28" rx="3" fill="#FFFFFF" stroke="#1B7F6B" stroke-width="2"/>
+  <line x1="156" y1="188" x2="176" y2="188" stroke="#E7F4F0" stroke-width="2"/>
+  <line x1="156" y1="196" x2="172" y2="196" stroke="#B8D4E8" stroke-width="2"/>
+  <!-- Other arm -->
+  <path d="M295 220 L318 205 L325 188" stroke="#B8D4E8" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <!-- Pointer / teaching gesture -->
+  <line x1="325" y1="188" x2="345" y2="168" stroke="#1B7F6B" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="348" cy="165" r="4" fill="#1B7F6B"/>
+
+  <!-- Decorative leaf / growth -->
+  <path d="M380 200 C395 190 410 195 408 210 C406 225 390 230 378 220 C372 215 375 205 380 200 Z" fill="#E7F4F0" stroke="#1B7F6B" stroke-width="1.5"/>
+  <path d="M394 210 L394 235" stroke="#1B7F6B" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Small heart / care symbol -->
+  <path d="M108 88 C108 78 118 72 124 80 C130 72 140 78 140 88 C140 100 124 112 124 112 C124 112 108 100 108 88 Z" fill="#B8D4E8" stroke="#1B7F6B" stroke-width="1.5"/>
+</svg>

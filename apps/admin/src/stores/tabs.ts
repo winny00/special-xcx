@@ -22,5 +22,10 @@ export const useTabsStore = defineStore('tabs', () => {
     return nextPath
   }
 
-  return { tabs, activePath, syncRoute, closeTab }
+  function resetTabs() {
+    tabs.value = [{ path: '/dashboard', title: '数据概览', closable: false }]
+    activePath.value = '/dashboard'
+  }
+
+  return { tabs, activePath, syncRoute, closeTab, resetTabs }
 })

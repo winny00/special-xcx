@@ -21,6 +21,7 @@ function toggleSidebar() {
 
 function handleLogout() {
   auth.logout()
+  tabsStore.resetTabs()
   router.push('/login')
 }
 

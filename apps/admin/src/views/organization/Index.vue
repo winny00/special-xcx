@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   addOrganization,
   deleteOrganizations,
+  getOrganization,
   listOrganizations,
   updateOrganization,
   type SpecialOrganization,
 } from '@/api/special'
+import FgCoverUpload from '@/components/FgCoverUpload.vue'
+
+const route = useRoute()
 
 const loading = ref(false)
 const tableData = ref<SpecialOrganization[]>([])
@@ -26,6 +31,7 @@ const dialogTitle = ref('新增机构')
 const form = reactive<SpecialOrganization>({
   name: '',
   orgType: 'school',
+  coverUrl: '',
   status: 1,
   auditStatus: 0,
 })
@@ -85,6 +91,7 @@ function resetForm() {
     contactName: '',
     contactPhone: '',
     description: '',
+    coverUrl: '',
     auditStatus: 0,
     status: 1,
   })
@@ -130,7 +137,40 @@ function handlePageChange(page: number) {
   fetchList()
 }
 
-onMounted(fetchList)
+async function openEditById(editId: string | number) {
+  const id = Number(editId)
+  if (!id) {
+    return
+  }
+  const row = tableData.value.find(item => item.id === id)
+  if (row) {
+    handleEdit(row)
+    return
+  }
+  try {
+    const detail = await getOrganization(id)
+    handleEdit(detail)
+  }
+  catch {
+    ElMessage.warning('未找到该机构')
+  }
+}
+
+watch(
+  () => route.query.editId,
+  (editId) => {
+    if (editId) {
+      openEditById(String(editId))
+    }
+  },
+)
+
+onMounted(async () => {
+  await fetchList()
+  if (route.query.editId) {
+    await openEditById(String(route.query.editId))
+  }
+})
 </script>
 
 <template>
@@ -157,6 +197,19 @@ onMounted(fetchList)
     <div class="workbench-card">
       <el-table v-loading="loading" :data="tableData">
         <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column label="封面" width="80">
+          <template #default="{ row }">
+            <el-image
+              v-if="row.coverUrl"
+              :src="row.coverUrl"
+              fit="cover"
+              style="width: 64px; height: 64px; border-radius: 8px"
+              :preview-src-list="[row.coverUrl]"
+              preview-teleported
+            />
+            <span v-else>—</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="name" label="机构名称" min-width="160" />
         <el-table-column label="类型" width="110">
           <template #default="{ row }">
@@ -219,6 +272,9 @@ onMounted(fetchList)
       </el-form-item>
       <el-form-item label="描述">
         <el-input v-model="form.description" type="textarea" :rows="2" />
+      </el-form-item>
+      <el-form-item label="封面">
+        <FgCoverUpload v-model="form.coverUrl" />
       </el-form-item>
       <el-form-item label="审核状态">
         <el-radio-group v-model="form.auditStatus">

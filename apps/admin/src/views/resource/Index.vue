@@ -11,6 +11,7 @@ import {
   updateResource,
   type SpecialResource,
 } from '@/api/special'
+import FgCoverUpload from '@/components/FgCoverUpload.vue'
 
 const route = useRoute()
 
@@ -48,6 +49,7 @@ const form = reactive<SpecialResource>({
   resourceType: fixedType.value,
   category: '',
   summary: '',
+  coverUrl: '',
   status: 0,
 })
 
@@ -103,6 +105,7 @@ function resetForm() {
     category: '',
     summary: '',
     content: '',
+    coverUrl: '',
     providerName: '',
     contactPhone: '',
     region: '',
@@ -206,6 +209,19 @@ onMounted(() => {
     <div class="workbench-card">
       <el-table v-loading="loading" :data="tableData">
         <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column label="封面" width="80">
+          <template #default="{ row }">
+            <el-image
+              v-if="row.coverUrl"
+              :src="row.coverUrl"
+              fit="cover"
+              style="width: 64px; height: 64px; border-radius: 8px"
+              :preview-src-list="[row.coverUrl]"
+              preview-teleported
+            />
+            <span v-else>—</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="title" label="标题" min-width="160" />
         <el-table-column prop="category" label="分类" width="120" />
         <el-table-column prop="providerName" label="提供方" width="120" />
@@ -245,6 +261,9 @@ onMounted(() => {
       </el-form-item>
       <el-form-item label="摘要">
         <el-input v-model="form.summary" type="textarea" :rows="2" />
+      </el-form-item>
+      <el-form-item label="封面">
+        <FgCoverUpload v-model="form.coverUrl" />
       </el-form-item>
       <el-form-item label="提供方">
         <el-input v-model="form.providerName" />

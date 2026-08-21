@@ -26,3 +26,19 @@
 .icon-chat:before {
   content: '\e600';
 }
+
+.icon-tab-home:before {
+  content: '\e600';
+}
+
+.icon-tab-resource:before {
+  content: '\e9c2';
+}
+
+.icon-tab-org:before {
+  content: '\e9c2';
+}
+
+.icon-tab-me:before {
+  content: '\e78c';
+}

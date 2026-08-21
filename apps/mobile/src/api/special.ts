@@ -1,4 +1,4 @@
-import type { IRuoYiPageResult, ISpecialAppointment, ISpecialOrganization, ISpecialResource } from './types/special'
+import type { IRuoYiPageResult, ISpecialAppointment, ISpecialArticle, ISpecialOrganization, ISpecialResource } from './types/special'
 import { http } from '@/http/http'
 
 /** 资源列表（已发布） */
@@ -30,4 +30,19 @@ export function getOrganizationList(params: {
 /** 提交预约申请 */
 export function createAppointment(data: ISpecialAppointment) {
   return http.post<void>('/special/mobile/appointment', data)
+}
+
+/** 资讯列表（已发布） */
+export function getArticleList(params: {
+  pageNum?: number
+  pageSize?: number
+  category?: string
+  title?: string
+}) {
+  return http.get<IRuoYiPageResult<ISpecialArticle>>('/special/mobile/article/list', params)
+}
+
+/** 资讯详情 */
+export function getArticleDetail(id: string | number) {
+  return http.get<ISpecialArticle>(`/special/mobile/article/${id}`)
 }

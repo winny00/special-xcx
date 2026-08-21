@@ -43,26 +43,26 @@ export const customTabbarList: CustomTabBarItem[] = [
   {
     text: '%tabbar.home%',
     pagePath: 'pages/index/index',
-    iconType: 'unocss',
-    icon: 'i-carbon-home',
+    iconType: 'iconfont',
+    icon: 'iconfont icon-tab-home',
   },
   {
     pagePath: 'pages/resource/list',
     text: '%tabbar.resource%',
-    iconType: 'unocss',
-    icon: 'i-carbon-catalog',
+    iconType: 'iconfont',
+    icon: 'iconfont icon-tab-resource',
   },
   {
     pagePath: 'pages/organization/list',
     text: '%tabbar.organization%',
-    iconType: 'unocss',
-    icon: 'i-carbon-building',
+    iconType: 'iconfont',
+    icon: 'iconfont icon-tab-org',
   },
   {
     pagePath: 'pages/me/me',
     text: '%tabbar.me%',
-    iconType: 'unocss',
-    icon: 'i-carbon-user',
+    iconType: 'iconfont',
+    icon: 'iconfont icon-tab-me',
   },
 ]
 
@@ -98,7 +98,7 @@ const _tabbar: TabBar = {
   selectedColor: '#1B7F6B',
   backgroundColor: '#FFFFFF',
   borderStyle: 'black',
-  height: '50px',
+  height: '56px',
   fontSize: '10px',
   iconWidth: '24px',
   spacing: '3px',

@@ -50,6 +50,19 @@ export interface SpecialAppointment {
   createTime?: string
 }
 
+export interface SpecialArticle {
+  id?: number
+  title: string
+  summary?: string
+  content?: string
+  coverUrl?: string
+  category?: string
+  status?: number
+  publishTime?: string
+  viewCount?: number
+  createTime?: string
+}
+
 export interface ListQuery {
   pageNum?: number
   pageSize?: number
@@ -130,4 +143,25 @@ export function updateAppointment(data: SpecialAppointment) {
 
 export function deleteAppointments(ids: number[]) {
   return request.delete(`/special/appointment/${ids.join(',')}`)
+}
+
+// Article CRUD
+export function listArticles(params?: ListQuery) {
+  return request.get<PageResult<SpecialArticle>>('/special/article/list', { params })
+}
+
+export function getArticle(id: number) {
+  return request.get<SpecialArticle>(`/special/article/${id}`)
+}
+
+export function addArticle(data: SpecialArticle) {
+  return request.post('/special/article', data)
+}
+
+export function updateArticle(data: SpecialArticle) {
+  return request.put('/special/article', data)
+}
+
+export function deleteArticles(ids: number[]) {
+  return request.delete(`/special/article/${ids.join(',')}`)
 }

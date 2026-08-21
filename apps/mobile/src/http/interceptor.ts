@@ -48,13 +48,14 @@ const httpInterceptor = {
     options.header = {
       ...options.header,
     }
+    // RuoYi 客户端标识（登录与鉴权请求均需携带）
+    options.header.clientid = import.meta.env.VITE_RUOYI_CLIENT_ID || 'special_xcx_client_id'
     // 3. 添加 token 请求头标识
     const tokenStore = useTokenStore()
     const token = tokenStore.updateNowTime().validToken
 
     if (token) {
       options.header.Authorization = `Bearer ${token}`
-      options.header.clientid = import.meta.env.VITE_RUOYI_CLIENT_ID || 'special_xcx_client_id'
     }
     return options
   },

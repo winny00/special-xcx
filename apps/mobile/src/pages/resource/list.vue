@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { ISpecialResource } from '@/api/types/special'
+import { RESOURCE_TYPE_MAP } from '@/api/types/special'
 import { getResourceList } from '@/api/special'
 import { consumePendingResourceFilter } from '@/utils/resource-nav'
 
@@ -12,10 +13,18 @@ definePage({
 const resources = ref<ISpecialResource[]>([])
 const loading = ref(false)
 const finished = ref(false)
+const initialLoading = ref(true)
 const pageNum = ref(1)
 const pageSize = 10
 const keyword = ref('')
 const resourceType = ref('')
+
+const typePills = [
+  { label: '全部', value: '' },
+  ...Object.entries(RESOURCE_TYPE_MAP)
+    .filter(([key]) => key !== 'org')
+    .map(([value, label]) => ({ label, value })),
+]
 
 async function loadMore() {
   if (loading.value || finished.value)
@@ -40,6 +49,7 @@ async function loadMore() {
   }
   finally {
     loading.value = false
+    initialLoading.value = false
   }
 }
 
@@ -48,7 +58,13 @@ function search() {
   pageNum.value = 1
   finished.value = false
   loading.value = false
+  initialLoading.value = true
   loadMore()
+}
+
+function selectType(value: string) {
+  resourceType.value = value
+  search()
 }
 
 function goDetail(id: string | number) {
@@ -78,12 +94,18 @@ onReachBottom(() => {
 
 <template>
   <view class="min-h-screen bg-[#F4F7F6] pb-safe">
-    <view class="sticky top-0 z-10 bg-white px-4 py-3">
-      <wd-search v-model="keyword" placeholder="搜索课程、老师、机构..." @search="search" @clear="search" />
-    </view>
+    <fg-filter-bar
+      :pills="typePills"
+      :active-value="resourceType"
+      @select="selectType"
+    >
+      <wd-search v-model="keyword" placeholder="搜索课程、老师..." @search="search" @clear="search" />
+    </fg-filter-bar>
+
+    <fg-skeleton-block v-if="initialLoading" />
 
     <fg-empty-state
-      v-if="resources.length === 0 && !loading"
+      v-else-if="resources.length === 0 && !loading"
       title="暂无匹配资源"
       description="换个关键词试试，或先看看首页推荐"
       action-text="返回首页"
@@ -96,7 +118,7 @@ onReachBottom(() => {
       </view>
     </view>
 
-    <view v-if="loading" class="py-4 text-center text-sm text-muted">
+    <view v-if="loading && !initialLoading" class="py-4 text-center text-sm text-muted">
       加载中...
     </view>
     <view v-else-if="finished && resources.length > 0" class="py-4 text-center text-sm text-muted">

@@ -1,5 +1,5 @@
-// 测试用的 iconfont，可生效
-// @import './iconfont.css';
+// 测试用的 iconfont，Tab 图标
+@import './iconfont.css';
 
 .test {
   // 可以通过 @apply 多个样式封装整体样式
@@ -17,6 +17,9 @@ page {
   --color-primary-soft: #e7f4f0;
   --color-ink: #1c2b28;
   --color-muted: #4f635f;
+  --shadow-card: 0 2px 12px rgba(28, 43, 40, 0.06);
+  --radius-card: 12px;
+  --motion-fast: 200ms ease;
   --wot-color-theme: #1b7f6b;
   --wot-button-primary-bg-color: #1b7f6b;
   background-color: var(--color-canvas);
@@ -40,6 +43,27 @@ page {
   }
 }
 /* #endif */
+
+.fg-surface-card {
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.fg-hero-gradient {
+  background: linear-gradient(180deg, var(--color-primary-soft) 0%, var(--color-canvas) 100%);
+}
+
+.fg-tap-active:active {
+  opacity: 0.85;
+  transition: opacity var(--motion-fast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fg-tap-active:active {
+    transition: none;
+  }
+}
 
 /*
 border-t-1

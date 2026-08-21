@@ -11,11 +11,14 @@ import org.dromara.common.core.validate.QueryGroup;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.web.core.BaseController;
 import org.dromara.special.domain.bo.SpecialAppointmentBo;
+import org.dromara.special.domain.bo.SpecialArticleBo;
 import org.dromara.special.domain.bo.SpecialOrganizationBo;
 import org.dromara.special.domain.bo.SpecialResourceBo;
+import org.dromara.special.domain.vo.SpecialArticleVo;
 import org.dromara.special.domain.vo.SpecialOrganizationVo;
 import org.dromara.special.domain.vo.SpecialResourceVo;
 import org.dromara.special.service.ISpecialAppointmentService;
+import org.dromara.special.service.ISpecialArticleService;
 import org.dromara.special.service.ISpecialOrganizationService;
 import org.dromara.special.service.ISpecialResourceService;
 import org.springframework.validation.annotation.Validated;
@@ -36,6 +39,7 @@ public class SpecialMobileController extends BaseController {
     private final ISpecialResourceService specialResourceService;
     private final ISpecialOrganizationService specialOrganizationService;
     private final ISpecialAppointmentService specialAppointmentService;
+    private final ISpecialArticleService specialArticleService;
 
     /**
      * 查询已发布资源列表
@@ -71,6 +75,23 @@ public class SpecialMobileController extends BaseController {
     public R<Void> createAppointment(@RequestBody SpecialAppointmentBo bo) {
         ValidatorUtils.validate(bo, AddGroup.class);
         return toAjax(specialAppointmentService.createMobileAppointment(bo));
+    }
+
+    /**
+     * 查询已发布资讯列表
+     */
+    @GetMapping("/article/list")
+    public R<PageResult<SpecialArticleVo>> articleList(@Validated(QueryGroup.class) SpecialArticleBo bo, PageQuery pageQuery) {
+        return R.ok(specialArticleService.queryPublishedPageList(bo, pageQuery));
+    }
+
+    /**
+     * 获取已发布资讯详情
+     */
+    @GetMapping("/article/{id}")
+    public R<SpecialArticleVo> articleDetail(@NotNull(message = "主键不能为空")
+                                             @PathVariable("id") Long id) {
+        return R.ok(specialArticleService.queryPublishedById(id));
     }
 
 }

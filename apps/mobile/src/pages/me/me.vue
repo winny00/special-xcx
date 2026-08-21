@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { IMobileProfile } from '@/api/me'
+import { getMyProfile } from '@/api/me'
 import { storeToRefs } from 'pinia'
 import { LOGIN_PAGE } from '@/router/config'
 import { useUserStore } from '@/store'
@@ -14,27 +16,44 @@ const userStore = useUserStore()
 const tokenStore = useTokenStore()
 const { userInfo } = storeToRefs(userStore)
 
+const profile = ref<IMobileProfile | null>(null)
+
 const displayName = computed(() => {
   if (!tokenStore.hasLogin)
     return '未登录'
-  return userInfo.value.nickname || userInfo.value.username || '已登录用户'
+  return profile.value?.nickname || userInfo.value.nickname || userInfo.value.username || '已登录用户'
 })
 
 const displayHint = computed(() => {
   if (!tokenStore.hasLogin)
     return '登录后可预约咨询、查看个人信息'
+  const parts = []
+  if (profile.value?.roleName)
+    parts.push(profile.value.roleName)
+  if (profile.value?.phone)
+    parts.push(profile.value.phone)
+  if (parts.length)
+    return parts.join(' · ')
   return userInfo.value.username ? `账号 ${userInfo.value.username}` : '欢迎回来'
 })
 
-async function handleLogin() {
-  // #ifdef MP-WEIXIN
-  await tokenStore.wxLogin()
-  // #endif
-  // #ifndef MP-WEIXIN
-  uni.navigateTo({
-    url: LOGIN_PAGE,
-  })
-  // #endif
+const avatarUrl = computed(() => profile.value?.avatar || userInfo.value.avatar)
+
+async function loadProfile() {
+  if (!tokenStore.hasLogin) {
+    profile.value = null
+    return
+  }
+  try {
+    profile.value = await getMyProfile()
+  }
+  catch (e) {
+    console.error('加载资料失败', e)
+  }
+}
+
+function handleLogin() {
+  uni.navigateTo({ url: LOGIN_PAGE })
 }
 
 function handleLogout() {
@@ -44,72 +63,91 @@ function handleLogout() {
     success: (res) => {
       if (res.confirm) {
         useTokenStore().logout()
-        uni.showToast({
-          title: '退出登录成功',
-          icon: 'success',
-        })
+        profile.value = null
+        uni.showToast({ title: '退出登录成功', icon: 'success' })
       }
     },
   })
 }
 
 function goAppointments() {
-  uni.showToast({ title: '我的预约即将上线', icon: 'none' })
+  if (!tokenStore.hasLogin) {
+    handleLogin()
+    return
+  }
+  uni.navigateTo({ url: '/pages/me/appointments' })
 }
 
 function goAbout() {
   uni.navigateTo({ url: '/pages/about/about' })
 }
+
+onShow(() => {
+  loadProfile()
+})
 </script>
 
 <template>
   <view class="min-h-screen bg-[#F4F7F6] pb-safe">
-    <view class="flex items-center bg-white px-4 py-6">
-      <view class="flex h-14 w-14 items-center justify-center rounded-full bg-[#E7F4F0] text-lg font-medium text-[#1B7F6B]">
-        {{ displayName.slice(0, 1) }}
-      </view>
-      <view class="ml-3 min-w-0 flex-1">
-        <view class="truncate text-lg font-semibold text-[#1C2B28]">
-          {{ displayName }}
-        </view>
-        <view class="mt-1 truncate text-xs text-muted">
-          {{ displayHint }}
-        </view>
-      </view>
-      <view
-        v-if="!tokenStore.hasLogin"
-        class="inline-flex min-h-11 items-center rounded-full bg-[#1B7F6B] px-4 text-sm text-white"
-        @click="handleLogin"
-      >
-        登录
-      </view>
-    </view>
+    <fg-profile-card
+      :display-name="displayName"
+      :hint="displayHint"
+      :logged-in="tokenStore.hasLogin"
+      :avatar-url="avatarUrl"
+      @login="handleLogin"
+    />
 
-    <view class="mx-3 mt-3 overflow-hidden rounded-[12px] bg-white">
-      <view class="flex items-center justify-between px-4 py-4" @click="goAppointments">
+    <view class="menu-card fg-surface-card mx-3 -mt-2 overflow-hidden">
+      <view class="menu-item fg-tap-active" @click="goAppointments">
         <view class="flex items-center">
-          <text class="i-carbon-calendar mr-3 text-[#1B7F6B]" />
-          <text class="text-sm text-[#1C2B28]">我的预约</text>
+          <text class="i-carbon-calendar menu-icon" />
+          <text class="text-base text-[#1C2B28]">我的预约</text>
         </view>
         <text class="i-carbon-chevron-right text-muted" />
       </view>
-      <view class="mx-4 h-px bg-[#F4F7F6]" />
-      <view class="flex items-center justify-between px-4 py-4" @click="goAbout">
+      <view class="menu-divider" />
+      <view class="menu-item fg-tap-active" @click="goAbout">
         <view class="flex items-center">
-          <text class="i-carbon-information mr-3 text-[#1B7F6B]" />
-          <text class="text-sm text-[#1C2B28]">关于</text>
+          <text class="i-carbon-information menu-icon" />
+          <text class="text-base text-[#1C2B28]">关于</text>
         </view>
         <text class="i-carbon-chevron-right text-muted" />
       </view>
     </view>
 
     <view v-if="tokenStore.hasLogin" class="mx-3 mt-6">
-      <view
-        class="rounded-[12px] bg-white py-3 text-center text-sm text-[#C45656]"
-        @click="handleLogout"
-      >
+      <view class="logout-btn fg-surface-card fg-tap-active" @click="handleLogout">
         退出登录
       </view>
     </view>
   </view>
 </template>
+
+<style scoped lang="scss">
+.menu-card {
+  margin-top: -8px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 0 16px;
+}
+.menu-icon {
+  margin-right: 12px;
+  color: var(--color-primary);
+  font-size: 18px;
+}
+.menu-divider {
+  height: 1px;
+  margin: 0 16px;
+  background: var(--color-canvas);
+}
+.logout-btn {
+  padding: 14px;
+  text-align: center;
+  font-size: 14px;
+  color: #c45656;
+}
+</style>

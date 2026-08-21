@@ -59,6 +59,12 @@
             <artifactId>ruoyi-common-excel</artifactId>
         </dependency>
 
+        <!-- 用户资料（家长中心） -->
+        <dependency>
+            <groupId>org.dromara</groupId>
+            <artifactId>ruoyi-system</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

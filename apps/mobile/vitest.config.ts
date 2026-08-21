@@ -13,9 +13,10 @@ export default defineConfig({
     exclude: ['node_modules', 'src/uni_modules/**'],
   },
   resolve: {
-    alias: {
-      '@': path.resolve(process.cwd(), 'src'),
-      '@img': path.resolve(process.cwd(), 'src/static/images'),
-    },
+    alias: [
+      { find: '@/pages.json', replacement: path.resolve(process.cwd(), 'src/__mocks__/pages.json.ts') },
+      { find: '@', replacement: path.resolve(process.cwd(), 'src') },
+      { find: '@img', replacement: path.resolve(process.cwd(), 'src/static/images') },
+    ],
   },
 })

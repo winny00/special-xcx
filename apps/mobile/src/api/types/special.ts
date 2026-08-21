@@ -30,6 +30,20 @@ export interface ISpecialOrganization {
   coverUrl?: string
 }
 
+/** 特教资讯 */
+export interface ISpecialArticle {
+  id: string | number
+  title: string
+  summary?: string
+  content?: string
+  coverUrl?: string
+  category?: string
+  status?: string | number
+  publishTime?: string
+  viewCount?: number
+  createTime?: string
+}
+
 /** 预约申请 */
 export interface ISpecialAppointment {
   id?: string | number
@@ -56,3 +70,11 @@ export const RESOURCE_TYPE_MAP: Record<string, string> = {
 }
 
 export const RESOURCE_CATEGORIES = ['感统', '语言', '社交', '行为干预', '融合教育', '家庭支持']
+
+export const ARTICLE_CATEGORY_MAP: Record<string, string> = {
+  policy: '政策解读',
+  news: '行业资讯',
+  guide: '家长指南',
+}
+
+export const ARTICLE_CATEGORIES = ['policy', 'news', 'guide'] as const

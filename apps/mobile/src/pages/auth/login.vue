@@ -55,16 +55,16 @@ async function doWxLogin() {
 
 <template>
   <view class="min-h-screen bg-[#F4F7F6]">
-    <view class="bg-[#E7F4F0] px-6 pb-8 pt-10">
+    <view class="fg-hero-gradient px-6 pb-10 pt-10">
       <view class="text-2xl font-semibold text-[#1B7F6B]">
         特教资源平台
       </view>
       <view class="mt-2 text-sm leading-relaxed text-muted">
-        安心对接特教资源
+        安心对接特教资源，为家庭找到可信赖的支持
       </view>
     </view>
 
-    <view class="mx-4 -mt-4 rounded-[12px] bg-white px-5 py-6">
+    <view class="mx-4 -mt-6 fg-surface-card px-5 py-6">
       <view class="mb-4">
         <text class="mb-2 block text-sm text-muted">账号</text>
         <input

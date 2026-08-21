@@ -20,23 +20,23 @@ const query = reactive({
 
 const statusMap: Record<number, string> = {
   0: '待处理',
-  1: '已确认',
-  2: '已取消',
-  3: '已完成',
+  1: '已联系',
+  2: '已完成',
+  3: '已取消',
 }
 
 const statusTagType: Record<number, 'info' | 'success' | 'warning' | 'primary'> = {
   0: 'info',
   1: 'primary',
-  2: 'warning',
-  3: 'success',
+  2: 'success',
+  3: 'warning',
 }
 
 const statusOptions = [
   { label: '待处理', value: 0 },
-  { label: '已确认', value: 1 },
-  { label: '已取消', value: 2 },
-  { label: '已完成', value: 3 },
+  { label: '已联系', value: 1 },
+  { label: '已完成', value: 2 },
+  { label: '已取消', value: 3 },
 ]
 
 async function fetchList() {

@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import type { CustomTabBarItem } from './types'
+import { computed } from 'vue'
 import { getI18nText } from './i18n'
 import { tabbarStore } from './store'
 
-defineProps<{
+const props = defineProps<{
   item: CustomTabBarItem
   index: number
   isBulge?: boolean
 }>()
+
+const isActive = computed(() => tabbarStore.curIdx === props.index)
 
 function getImageByIndex(index: number, item: CustomTabBarItem) {
   if (!item.iconActive) {
@@ -22,18 +25,31 @@ function getImageByIndex(index: number, item: CustomTabBarItem) {
   <view class="flex flex-col items-center justify-center">
     <template v-if="item.iconType === 'uiLib'">
       <!-- TODO: 以下内容请根据选择的UI库自行替换 -->
-      <!-- 如：<wd-icon name="home" /> (https://wot-design-uni.cn/component/icon.html) -->
-      <!-- 如：<uv-icon name="home" /> (https://www.uvui.cn/components/icon.html) -->
-      <!-- 如：<sar-icon name="image" /> (https://sard.wzt.zone/sard-uniapp-docs/components/icon)(sar没有home图标^_^) -->
-      <!-- <wd-icon :name="item.icon" size="20" /> -->
     </template>
     <template v-if="item.iconType === 'unocss' || item.iconType === 'iconfont'">
-      <view :class="[item.icon, isBulge ? 'text-80px' : 'text-20px']" />
+      <view
+        class="tab-icon-shell"
+        :class="[
+          isBulge ? 'tab-icon-shell--bulge' : '',
+          isActive && !isBulge ? 'tab-icon-shell--active' : '',
+        ]"
+      >
+        <view
+          :class="[
+            item.icon,
+            isBulge ? 'text-80px' : (item.iconType === 'iconfont' ? 'tab-iconfont' : 'text-20px'),
+          ]"
+        />
+      </view>
     </template>
     <template v-if="item.iconType === 'image'">
       <image :src="getImageByIndex(index, item)" mode="scaleToFill" :class="isBulge ? 'h-80px w-80px' : 'h-24px w-24px'" />
     </template>
-    <view v-if="!isBulge" class="mt-2px text-12px">
+    <view
+      v-if="!isBulge"
+      class="tab-label"
+      :class="isActive ? 'tab-label--active' : 'text-muted'"
+    >
       {{ getI18nText(item.text) }}
     </view>
     <!-- 角标显示 -->
@@ -49,3 +65,49 @@ function getImageByIndex(index: number, item: CustomTabBarItem) {
     </view>
   </view>
 </template>
+
+<style scoped lang="scss">
+.tab-icon-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.tab-icon-shell--active {
+  background-color: #e7f4f0;
+}
+.tab-icon-shell--bulge {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+}
+.tab-iconfont {
+  font-size: 22px;
+  line-height: 1;
+  transition: font-size 0.2s ease, color 0.2s ease;
+}
+.tab-icon-shell--active .tab-iconfont {
+  font-size: 24px;
+}
+.tab-label {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.2;
+  transition: color 0.2s ease;
+}
+.tab-label--active {
+  color: var(--wot-color-theme, #1b7f6b);
+  font-weight: 500;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab-icon-shell,
+  .tab-iconfont,
+  .tab-label {
+    transition: none;
+  }
+}
+</style>

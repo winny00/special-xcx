@@ -87,12 +87,12 @@ onShow(() => {
 </script>
 
 <template>
-  <view v-if="customTabbarEnable" class="h-50px pb-safe">
+  <view v-if="customTabbarEnable" class="tabbar-root pb-safe">
     <view class="border-and-fixed bg-white" @touchmove.stop.prevent>
-      <view class="h-50px flex items-center">
+      <view class="tabbar-inner flex items-center">
         <view
           v-for="(item, index) in tabbarList" :key="index"
-          class="flex min-h-11 flex-1 flex-col items-center justify-center"
+          class="tabbar-item flex min-h-11 min-w-48px flex-1 flex-col items-center justify-center active:opacity-80"
           :style="{ color: getColorByIndex(index) }"
           @click="handleClick(index)"
         >
@@ -102,7 +102,7 @@ onShow(() => {
               <TabbarItem :item="item" :index="index" class="text-center" is-bulge />
             </view>
           </view>
-          <TabbarItem v-else :item="item" :index="index" class="relative px-3 text-center" />
+          <TabbarItem v-else :item="item" :index="index" class="relative px-2 text-center" />
         </view>
       </view>
 
@@ -112,13 +112,20 @@ onShow(() => {
 </template>
 
 <style scoped lang="scss">
+.tabbar-root {
+  height: 56px;
+}
+.tabbar-inner {
+  height: 56px;
+}
 .border-and-fixed {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #e7f4f0;
+  box-shadow: 0 -2px 8px rgba(28, 43, 40, 0.04);
   box-sizing: border-box;
 }
 // 中间鼓包的样式

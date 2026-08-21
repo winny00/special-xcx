@@ -45,6 +45,12 @@ const router = createRouter({
       meta: { title: '机构管理' },
     },
     {
+      path: '/article',
+      name: 'Article',
+      component: () => import('@/views/article/Index.vue'),
+      meta: { title: '资讯管理' },
+    },
+    {
       path: '/appointment',
       name: 'Appointment',
       component: () => import('@/views/appointment/Index.vue'),

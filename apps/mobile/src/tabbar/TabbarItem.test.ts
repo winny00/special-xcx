@@ -1,12 +1,17 @@
 import type { CustomTabBarItem } from './types'
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import TabbarItem from './TabbarItem.vue'
+
+vi.mock('./i18n', () => ({
+  getI18nText: (key: string) => key.replace(/%(.+?)%/, '$1'),
+}))
 
 // mock tabbar store，避免 uni.getStorageSync 在模块加载时执行
 vi.mock('./store', () => ({
   tabbarStore: { curIdx: 0 },
 }))
+
+import TabbarItem from './TabbarItem.vue'
 
 const baseItem: CustomTabBarItem = {
   text: '首页',
@@ -36,11 +41,23 @@ describe('TabbarItem', () => {
     expect(wrapper.text()).not.toContain('首页')
   })
 
-  it('iconType=unocss 时渲染图标 class', () => {
+  it('iconType=iconfont 时渲染图标 class', () => {
+    const item: CustomTabBarItem = {
+      ...baseItem,
+      iconType: 'iconfont',
+      icon: 'iconfont icon-tab-home',
+    }
+    wrapper = mount(TabbarItem, {
+      props: { item, index: 0 },
+    })
+    expect(wrapper.html()).toContain('icon-tab-home')
+  })
+
+  it('选中态渲染浅绿底块', () => {
     wrapper = mount(TabbarItem, {
       props: { item: baseItem, index: 0 },
     })
-    expect(wrapper.html()).toContain('i-carbon-home')
+    expect(wrapper.find('.tab-icon-shell--active').exists()).toBe(true)
   })
 
   it('badge=dot 时渲染小红点（包含 rounded-full 样式）', () => {

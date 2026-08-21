@@ -24,6 +24,7 @@ const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     '/dashboard': '数据概览',
     '/organization': '机构管理',
+    '/article': '资讯管理',
     '/appointment': '预约管理',
     '/audit': '审核中心',
   }
@@ -104,6 +105,12 @@ onMounted(() => {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /></svg>
           </i>
           <template #title>机构管理</template>
+        </el-menu-item>
+        <el-menu-item index="/article">
+          <i class="menu-svg" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5" /></svg>
+          </i>
+          <template #title>资讯管理</template>
         </el-menu-item>
         <el-menu-item index="/appointment">
           <i class="menu-svg" aria-hidden="true">

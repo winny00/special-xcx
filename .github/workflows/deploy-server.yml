@@ -1,0 +1,175 @@
+# 后端：GitHub 云上 Maven 构建，上传 jar 到 ECS 并重启 special-server。
+#
+# Secrets（与 deploy-admin 相同）：
+#   ECS_HOST, ECS_USERNAME, ECS_SSH_KEY
+#
+# ECS 需已配置 systemd special-server、/opt/special/server、/opt/special/config
+
+name: Deploy server
+
+on:
+  workflow_call:
+    inputs:
+      run_migrations:
+        description: 执行 phase2a SQL 增量
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - 'scripts/ecs/migrate-phase2a.sql'
+      - 'scripts/ecs/nginx-special.conf'
+      - '.github/workflows/deploy-server.yml'
+  workflow_dispatch:
+    inputs:
+      run_migrations:
+        description: 执行 phase2a SQL 增量（建表/菜单）
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: server/pom.xml
+
+      - name: Build jar
+        working-directory: server
+        run: ./mvnw -B package -pl ruoyi-admin -am -DskipTests
+
+      - name: Prepare SSH
+        id: ssh
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+          ECS_USERNAME: ${{ secrets.ECS_USERNAME }}
+          ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "${ECS_HOST:-}"
+          test -n "${ECS_USERNAME:-}"
+          test -n "${ECS_SSH_KEY:-}"
+          KEY_FILE=$(mktemp)
+          printf '%s\n' "$ECS_SSH_KEY" | tr -d '\r' | sed 's/\\n/\n/g' > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          FIRST=$(head -1 "$KEY_FILE")
+          case "$FIRST" in
+            -----BEGIN*) echo "SSH private key header looks OK" ;;
+            *) echo "ECS_SSH_KEY must be the PRIVATE key"; exit 1 ;;
+          esac
+          looks_like_key() {
+            case "$1" in
+              *BEGIN*|*PRIVATE*|*OPENSSH*|*END*KEY*) return 0 ;;
+            esac
+            [ "${#1}" -gt 64 ]
+          }
+          ECS_HOST=$(printf '%s' "$ECS_HOST" | tr -d '\r\n\t ' | sed $'s/\xef\xbb\xbf//g')
+          ECS_USERNAME=$(printf '%s' "$ECS_USERNAME" | tr -d '\r\n\t ' | sed $'s/\xef\xbb\xbf//g')
+          ECS_HOST="${ECS_HOST#\"}"; ECS_HOST="${ECS_HOST%\"}"
+          ECS_USERNAME="${ECS_USERNAME#\"}"; ECS_USERNAME="${ECS_USERNAME%\"}"
+          if looks_like_key "$ECS_HOST"; then
+            echo "ECS_HOST looks like a key; using 8.134.110.218"
+            ECS_HOST=8.134.110.218
+          fi
+          if looks_like_key "$ECS_USERNAME"; then
+            echo "ECS_USERNAME looks like a key; using root"
+            ECS_USERNAME=root
+          fi
+          case "$ECS_USERNAME" in *@*) ECS_USERNAME="${ECS_USERNAME%%@*}" ;; esac
+          case "$ECS_HOST" in *@*) ECS_HOST="${ECS_HOST##*@}" ;; esac
+          case "$ECS_HOST" in *:*) ECS_HOST="${ECS_HOST%%:*}" ;; esac
+          echo "host=${ECS_HOST}" >> "$GITHUB_OUTPUT"
+          echo "user=${ECS_USERNAME}" >> "$GITHUB_OUTPUT"
+          echo "key_file=${KEY_FILE}" >> "$GITHUB_OUTPUT"
+          echo "SSH target ${ECS_USERNAME}@${ECS_HOST}"
+
+      - name: Run DB migrations (phase2a)
+        if: |
+          github.event_name == 'push' ||
+          (github.event_name == 'workflow_dispatch' && inputs.run_migrations != false) ||
+          (github.event_name == 'workflow_call' && inputs.run_migrations != false)
+        env:
+          ECS_HOST: ${{ steps.ssh.outputs.host }}
+          ECS_USERNAME: ${{ steps.ssh.outputs.user }}
+          KEY_FILE: ${{ steps.ssh.outputs.key_file }}
+        run: |
+          set -euo pipefail
+          scp -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+            scripts/ecs/migrate-phase2a.sql "${ECS_USERNAME}@${ECS_HOST}:/tmp/migrate-phase2a.sql"
+          ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+            "${ECS_USERNAME}@${ECS_HOST}" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          DB_NAME="${MYSQL_DATABASE:-ry-vue}"
+          if [ -f /opt/special/secrets.env ]; then
+            set -a
+            # shellcheck disable=SC1091
+            source /opt/special/secrets.env
+            set +a
+          fi
+          MYSQL_PWD="${MYSQL_ROOT_PASSWORD:-${DB_PASSWORD:-root}}"
+          mysql -uroot -p"$MYSQL_PWD" "$DB_NAME" < /tmp/migrate-phase2a.sql
+          rm -f /tmp/migrate-phase2a.sql
+          echo "phase2a migrations applied"
+          REMOTE
+
+      - name: Deploy jar and restart backend
+        env:
+          ECS_HOST: ${{ steps.ssh.outputs.host }}
+          ECS_USERNAME: ${{ steps.ssh.outputs.user }}
+          KEY_FILE: ${{ steps.ssh.outputs.key_file }}
+        run: |
+          set -euo pipefail
+          scp -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+            server/ruoyi-admin/target/ruoyi-admin.jar \
+            "${ECS_USERNAME}@${ECS_HOST}:/tmp/ruoyi-admin.jar"
+          ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+            "${ECS_USERNAME}@${ECS_HOST}" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_DIR=/opt/special/server
+          BACKUP_DIR=/opt/special/backups
+          JAR=ruoyi-admin.jar
+          TS=$(date +%Y%m%d-%H%M%S)
+          mkdir -p "$DEPLOY_DIR" "$BACKUP_DIR"
+          if [ -f "$DEPLOY_DIR/$JAR" ]; then
+            cp "$DEPLOY_DIR/$JAR" "$BACKUP_DIR/${JAR}.${TS}"
+          fi
+          mv /tmp/ruoyi-admin.jar "$DEPLOY_DIR/$JAR"
+          systemctl restart special-server
+          REMOTE
+
+      - name: Sync nginx config
+        env:
+          ECS_HOST: ${{ steps.ssh.outputs.host }}
+          ECS_USERNAME: ${{ steps.ssh.outputs.user }}
+          KEY_FILE: ${{ steps.ssh.outputs.key_file }}
+        run: |
+          set -euo pipefail
+          scp -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+            scripts/ecs/nginx-special.conf \
+            "${ECS_USERNAME}@${ECS_HOST}:/etc/nginx/sites-available/special"
+          ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+            "${ECS_USERNAME}@${ECS_HOST}" 'nginx -t && systemctl reload nginx'
+
+      - name: Health check
+        env:
+          ECS_HOST: ${{ steps.ssh.outputs.host }}
+          KEY_FILE: ${{ steps.ssh.outputs.key_file }}
+        run: |
+          set -euo pipefail
+          sleep 15
+          curl -sf "http://${ECS_HOST}/special/mobile/resource/list?pageNum=1&pageSize=1" | grep -q '"code":200'
+          curl -sf "http://${ECS_HOST}/special/mobile/article/list?pageNum=1&pageSize=1" | grep -q '"code":200'
+          rm -f "$KEY_FILE"

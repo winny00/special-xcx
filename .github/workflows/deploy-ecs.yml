@@ -1,0 +1,37 @@
+# 一键部署 ECS：后端 + 管理后台（GitHub Actions 云上构建，不在 ECS 跑 Maven/npm）
+#
+# 使用前在 GitHub 仓库 Settings → Secrets and variables → Actions 配置：
+#   ECS_HOST       例：8.134.110.218
+#   ECS_USERNAME   例：root
+#   ECS_SSH_KEY    SSH 私钥全文（含 BEGIN/END）
+#
+# 触发：GitHub → Actions → Deploy ECS → Run workflow
+
+name: Deploy ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_migrations:
+        description: 执行 phase2a 数据库增量
+        type: boolean
+        default: true
+      reason:
+        description: 备注
+        required: false
+        default: manual
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-server:
+    uses: ./.github/workflows/deploy-server.yml
+    with:
+      run_migrations: ${{ inputs.run_migrations }}
+    secrets: inherit
+
+  deploy-admin:
+    needs: deploy-server
+    uses: ./.github/workflows/deploy-admin.yml
+    secrets: inherit

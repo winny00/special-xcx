@@ -42,6 +42,14 @@ class OssCompatTest {
     }
 
     @Test
+    @DisplayName("PermanentRedirect 提示核对桶地域")
+    void permanentRedirectMessage() {
+        String msg = OssCompat.uploadFailMessage(new RuntimeException(
+            "PermanentRedirect: The bucket you are attempting to access must be addressed using the specified endpoint."));
+        assertTrue(msg.contains("地域"));
+    }
+
+    @Test
     @DisplayName("未知错误保留原始信息")
     void genericMessageKeepsDetail() {
         assertEquals(

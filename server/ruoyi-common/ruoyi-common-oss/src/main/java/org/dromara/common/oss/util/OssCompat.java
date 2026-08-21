@@ -37,6 +37,13 @@ public final class OssCompat {
         if (lower.contains("nosuchbucket")) {
             return "OSS 上传失败：找不到存储桶，请核对 bucket 名称与 endpoint 地域";
         }
+        if (lower.contains("permanentredirect")) {
+            String location = redirectEndpoint(error);
+            if (StringUtils.isNotBlank(location)) {
+                return "OSS 上传失败：存储桶不在当前 endpoint 地域，请把 endpoint 改为 " + location;
+            }
+            return "OSS 上传失败：存储桶地域与 endpoint 不一致。请在 OSS 控制台核对桶所在地域（杭州=oss-cn-hangzhou.aliyuncs.com，广州=oss-cn-guangzhou.aliyuncs.com）";
+        }
         if (lower.contains("chunked")) {
             return "OSS 上传失败：当前上传方式与阿里云 OSS 不兼容（chunked encoding）";
         }
@@ -45,6 +52,25 @@ public final class OssCompat {
 
     private static boolean containsCloudToken(String value) {
         return StringUtils.isNotBlank(value) && StringUtils.containsAny(value, OssConstant.CLOUD_SERVICE);
+    }
+
+    private static String redirectEndpoint(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof AwsServiceException aws && aws.awsErrorDetails() != null
+                && aws.awsErrorDetails().sdkHttpResponse() != null) {
+                var response = aws.awsErrorDetails().sdkHttpResponse();
+                String location = response.firstMatchingHeader("Location").orElse("");
+                if (StringUtils.isBlank(location)) {
+                    location = response.firstMatchingHeader("x-oss-bucket-region").orElse("");
+                }
+                if (StringUtils.isNotBlank(location)) {
+                    return location.replaceFirst("^https?://", "").replaceFirst("/$", "");
+                }
+            }
+            current = current.getCause();
+        }
+        return null;
     }
 
     private static String rootMessage(Throwable error) {

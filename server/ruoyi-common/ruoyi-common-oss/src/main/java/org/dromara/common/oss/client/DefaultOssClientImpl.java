@@ -60,11 +60,11 @@ public class DefaultOssClientImpl extends AbstractOssClientImpl {
         S3Configuration serviceConfiguration = buildServiceConfiguration(usePathStyleAccess);
 
         // 创建AWS基于 Netty 的 S3 客户端
+        // 路径风格只配在 S3Configuration，不要同时调用 forcePathStyle（AWS SDK 2.48+ 会拒绝）
         this.s3AsyncClient = S3AsyncClient.builder()
             .credentialsProvider(credentialsProvider)
             .endpointOverride(URI.create(endpointUrl))
             .region(region)
-            .forcePathStyle(usePathStyleAccess)
             .serviceConfiguration(serviceConfiguration)
             .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED)
             .responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED)

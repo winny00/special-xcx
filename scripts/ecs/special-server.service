@@ -1,0 +1,29 @@
+# 安装: scp 到 ECS 后
+#   cp special-server.service /etc/systemd/system/special-server.service
+#   systemctl daemon-reload && systemctl enable special-server
+#
+# 2G 内存 ECS：限制堆避免 OOM 导致 deploy 后 502
+
+[Unit]
+Description=Special Education Platform Backend (RuoYi)
+After=network.target mysql.service redis-server.service
+Wants=mysql.service redis-server.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/special/server
+Environment=JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+ExecStart=/usr/bin/java \
+  -Xms256m -Xmx768m \
+  -XX:+UseG1GC \
+  -jar /opt/special/server/ruoyi-admin.jar \
+  --spring.profiles.active=prod \
+  --spring.config.additional-location=file:/opt/special/config/
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/opt/special/server/logs/app.log
+StandardError=append:/opt/special/server/logs/app.log
+
+[Install]
+WantedBy=multi-user.target

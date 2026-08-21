@@ -20,6 +20,7 @@ on:
       - 'server/**'
       - 'scripts/ecs/migrate-phase2a.sql'
       - 'scripts/ecs/nginx-special.conf'
+      - 'scripts/ecs/deploy-server.sh'
       - '.github/workflows/deploy-server.yml'
   workflow_dispatch:
     inputs:
@@ -133,22 +134,11 @@ jobs:
         run: |
           set -euo pipefail
           scp -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+            scripts/ecs/deploy-server.sh \
             server/ruoyi-admin/target/ruoyi-admin.jar \
-            "${ECS_USERNAME}@${ECS_HOST}:/tmp/ruoyi-admin.jar"
+            "${ECS_USERNAME}@${ECS_HOST}:/tmp/"
           ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-            "${ECS_USERNAME}@${ECS_HOST}" 'bash -s' <<'REMOTE'
-          set -euo pipefail
-          DEPLOY_DIR=/opt/special/server
-          BACKUP_DIR=/opt/special/backups
-          JAR=ruoyi-admin.jar
-          TS=$(date +%Y%m%d-%H%M%S)
-          mkdir -p "$DEPLOY_DIR" "$BACKUP_DIR"
-          if [ -f "$DEPLOY_DIR/$JAR" ]; then
-            cp "$DEPLOY_DIR/$JAR" "$BACKUP_DIR/${JAR}.${TS}"
-          fi
-          mv /tmp/ruoyi-admin.jar "$DEPLOY_DIR/$JAR"
-          systemctl restart special-server
-          REMOTE
+            "${ECS_USERNAME}@${ECS_HOST}" 'bash /tmp/deploy-server.sh /tmp/ruoyi-admin.jar'
 
       - name: Sync nginx config
         env:

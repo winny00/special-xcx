@@ -1,0 +1,70 @@
+// Geeker workbench layout classes
+
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.search-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--fg-surface);
+  border-radius: var(--fg-radius-md);
+  box-shadow: var(--fg-shadow-card);
+}
+
+.table-card {
+  background: var(--fg-surface);
+  border-radius: var(--fg-radius-md);
+  padding: 16px 16px 8px;
+  box-shadow: var(--fg-shadow-card);
+}
+
+.table-card .el-pagination {
+  margin: 16px 0 8px;
+  justify-content: flex-end;
+}
+
+// Legacy aliases — keep until Task 7 view migration
+
+.workbench-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.workbench-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg-ink);
+}
+
+.workbench-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--fg-surface);
+  border-radius: var(--fg-radius-md);
+  box-shadow: var(--fg-shadow-card);
+}
+
+.workbench-card {
+  background: var(--fg-surface);
+  border-radius: var(--fg-radius-md);
+  padding: 16px 16px 8px;
+  box-shadow: var(--fg-shadow-card);
+}
+
+.workbench-card .el-pagination {
+  margin: 16px 0 8px;
+  justify-content: flex-end;
+}

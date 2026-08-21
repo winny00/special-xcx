@@ -1,0 +1,65 @@
+// Element Plus global overrides (Geeker design system)
+
+// Table
+.el-table {
+  th.el-table__cell {
+    background-color: #fafcfb;
+  }
+
+  .el-table__body tr:hover > td.el-table__cell {
+    background-color: var(--fg-canvas);
+  }
+
+  td.el-table__cell,
+  th.el-table__cell {
+    padding: 12px 0;
+  }
+}
+
+// Input / Select
+.el-input__wrapper,
+.el-select__wrapper {
+  min-height: 36px;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 3px var(--fg-primary-soft);
+}
+
+// Button
+.el-button--default {
+  border-color: var(--fg-border);
+}
+
+// Dialog
+.el-dialog {
+  border-radius: var(--fg-radius-md);
+}
+
+.el-dialog__header {
+  border-bottom: 1px solid var(--fg-border);
+}
+
+.el-dialog__footer {
+  border-top: 1px solid var(--fg-border);
+}
+
+// Pagination
+.el-pagination {
+  justify-content: flex-end;
+}
+
+// Breadcrumb
+.el-breadcrumb__separator {
+  color: var(--fg-muted);
+}
+
+.el-breadcrumb__item:last-child .el-breadcrumb__inner {
+  color: var(--fg-ink);
+  font-weight: 600;
+}
+
+.el-breadcrumb__item:not(:last-child) .el-breadcrumb__inner {
+  color: var(--fg-muted);
+}

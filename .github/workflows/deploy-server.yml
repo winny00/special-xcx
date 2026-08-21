@@ -166,10 +166,29 @@ jobs:
       - name: Health check
         env:
           ECS_HOST: ${{ steps.ssh.outputs.host }}
+          ECS_USERNAME: ${{ steps.ssh.outputs.user }}
           KEY_FILE: ${{ steps.ssh.outputs.key_file }}
         run: |
           set -euo pipefail
-          sleep 15
-          curl -sf "http://${ECS_HOST}/special/mobile/resource/list?pageNum=1&pageSize=1" | grep -q '"code":200'
-          curl -sf "http://${ECS_HOST}/special/mobile/article/list?pageNum=1&pageSize=1" | grep -q '"code":200'
+          RESOURCE_URL="http://${ECS_HOST}/special/mobile/resource/list?pageNum=1&pageSize=1"
+          ARTICLE_URL="http://${ECS_HOST}/special/mobile/article/list?pageNum=1&pageSize=1"
+          echo "Waiting for backend (up to 120s, 2G ECS cold start is slow)..."
+          ok=0
+          for i in $(seq 1 40); do
+            if curl -sf "$RESOURCE_URL" | grep -q '"code":200'; then
+              ok=1
+              echo "Resource API ready after $((i * 3))s"
+              break
+            fi
+            sleep 3
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "Health check failed: resource API not ready"
+            ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+              "${ECS_USERNAME}@${ECS_HOST}" 'systemctl status special-server --no-pager; tail -40 /opt/special/server/logs/app.log' || true
+            rm -f "$KEY_FILE"
+            exit 1
+          fi
+          curl -sf "$ARTICLE_URL" | grep -q '"code":200'
+          echo "Article API OK"
           rm -f "$KEY_FILE"

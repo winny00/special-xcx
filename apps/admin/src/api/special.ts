@@ -29,6 +29,7 @@ export interface SpecialOrganization {
   contactName?: string
   contactPhone?: string
   description?: string
+  coverUrl?: string
   auditStatus?: number
   status?: number
   createTime?: string

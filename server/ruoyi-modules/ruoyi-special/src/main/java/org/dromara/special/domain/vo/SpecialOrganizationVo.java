@@ -84,6 +84,12 @@ public class SpecialOrganizationVo implements Serializable {
     private String description;
 
     /**
+     * 封面图 URL
+     */
+    @ExcelProperty(value = "封面图")
+    private String coverUrl;
+
+    /**
      * 审核状态（0待审核 1已通过 2已拒绝）
      */
     @ExcelProperty(value = "审核状态")

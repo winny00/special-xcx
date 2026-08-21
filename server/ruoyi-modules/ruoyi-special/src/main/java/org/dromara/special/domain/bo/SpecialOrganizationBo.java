@@ -76,6 +76,11 @@ public class SpecialOrganizationBo implements Serializable {
     private String description;
 
     /**
+     * 封面图 URL
+     */
+    private String coverUrl;
+
+    /**
      * 审核状态（0待审核 1已通过 2已拒绝）
      */
     private Integer auditStatus;

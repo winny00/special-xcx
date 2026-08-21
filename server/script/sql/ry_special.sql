@@ -110,6 +110,10 @@ INSERT INTO sys_menu VALUES (1764000000000000031, '预约查询', 17640000000000
 INSERT INTO sys_menu VALUES (1764000000000000032, '预约处理', 1764000000000000004, 2, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:appointment:edit', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '预约处理';
 INSERT INTO sys_menu VALUES (1764000000000000033, '预约删除', 1764000000000000004, 3, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:appointment:remove', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '预约删除';
 
+-- 数据概览
+INSERT INTO sys_menu VALUES (1764000000000000005, '数据概览', 1764000000000000001, 0, 'dashboard', 'special/dashboard/index', '', 'N', 'Y', 'C', '0', '0', 'special:dashboard:view', 'dashboard', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '工作台概览') ON DUPLICATE KEY UPDATE menu_name = '数据概览';
+INSERT INTO sys_menu VALUES (1764000000000000040, '概览查看', 1764000000000000005, 1, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:dashboard:view', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '概览查看';
+
 -- 字典：资源类型
 INSERT INTO sys_dict_type VALUES (1765000000000000001, '特教资源类型', 'special_resource_type', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '特教资源类型') ON DUPLICATE KEY UPDATE dict_name = '特教资源类型';
 INSERT INTO sys_dict_data VALUES (1765000000000000011, 1, '课程', 'course', 'special_resource_type', '', 'primary', 'N', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE dict_label = '课程';
@@ -127,3 +131,10 @@ INSERT INTO special_resource VALUES
 INSERT INTO special_organization VALUES
 (1767000000000000001, '阳光特教中心', 'org', 'GZ2024001', null, '广州市天河区体育西路100号', '广州市', '张主任', '13800000001', '专注自闭症儿童康复训练', 1, 1, 1761000000000000103, 1761100000000000001, sysdate(), null, null, '0'),
 (1767000000000000002, '希望特教学校', 'school', 'SZ2024002', null, '深圳市南山区科技园路88号', '深圳市', '王校长', '13800000002', '融合教育示范学校', 1, 1, 1761000000000000103, 1761100000000000001, sysdate(), null, null, '0');
+
+-- phase2a-cos: 机构封面
+ALTER TABLE special_organization
+  ADD COLUMN IF NOT EXISTS cover_url varchar(500) DEFAULT NULL COMMENT '封面图' AFTER description;
+
+-- 特教管理员复用 OSS 上传（RuoYi 菜单 118 文件管理下 OSS 权限）
+-- 若 admin 角色 role_id=1 已有 *:*:* 可跳过；否则插入 role_menu 关联 system:oss:upload

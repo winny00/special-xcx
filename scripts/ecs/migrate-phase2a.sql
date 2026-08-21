@@ -1,7 +1,21 @@
--- phase2a ECS 增量（可重复执行）
--- 机构封面
-ALTER TABLE special_organization
-  ADD COLUMN IF NOT EXISTS cover_url varchar(500) DEFAULT NULL COMMENT '封面图' AFTER description;
+-- phase2a ECS 增量（可重复执行，兼容 MySQL 5.7+）
+-- 机构封面（MySQL 5.7 不支持 ADD COLUMN IF NOT EXISTS）
+SET @db := DATABASE();
+SET @col_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = @db
+    AND TABLE_NAME = 'special_organization'
+    AND COLUMN_NAME = 'cover_url'
+);
+SET @sql := IF(
+  @col_exists = 0,
+  'ALTER TABLE special_organization ADD COLUMN cover_url varchar(500) DEFAULT NULL COMMENT ''封面图'' AFTER description',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- 资讯表
 CREATE TABLE IF NOT EXISTS special_article (

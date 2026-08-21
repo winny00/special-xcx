@@ -171,7 +171,7 @@ public class OssClientConfig implements Config<OssClientConfig, OssClientConfig.
             .accessKey(properties.getAccessKey())
             .secretKey(properties.getSecretKey())
             .bucket(properties.getBucketName())
-            .region(parseRegion(properties.getRegion()))
+            .region(parseRegion(properties.getRegion(), properties.getEndpoint()))
             .prefix(properties.getPrefix())
             .useHttps(SystemConstants.YES.equals(properties.getIsHttps()))
             .usePathStyleAccess(resolvePathStyleAccess(properties))
@@ -231,11 +231,28 @@ public class OssClientConfig implements Config<OssClientConfig, OssClientConfig.
      * @param regionString Region 字符串
      * @return Region 对象
      */
-    private static Region parseRegion(String regionString) {
-        if (StringUtils.isBlank(regionString)) {
-            return Region.US_EAST_1;
+    private static Region parseRegion(String regionString, String endpoint) {
+        if (StringUtils.isNotBlank(regionString)) {
+            return Region.of(regionString);
         }
-        return Region.of(regionString);
+        // 阿里云 endpoint 如 oss-cn-guangzhou.aliyuncs.com → cn-guangzhou
+        if (StringUtils.isNotBlank(endpoint) && endpoint.contains("oss-cn-")) {
+            int start = endpoint.indexOf("oss-cn-") + "oss-cn-".length();
+            int end = endpoint.indexOf('.', start);
+            if (end > start) {
+                return Region.of("cn-" + endpoint.substring(start, end));
+            }
+        }
+        return Region.US_EAST_1;
+    }
+
+    /**
+     * 是否为阿里云/腾讯云等公有云 S3 兼容存储（非 MinIO 自建）。
+     */
+    public boolean cloudStorage() {
+        return endpoint()
+            .filter(endpointHost -> StringUtils.containsAny(endpointHost, OssConstant.CLOUD_SERVICE))
+            .isPresent();
     }
 
     /**

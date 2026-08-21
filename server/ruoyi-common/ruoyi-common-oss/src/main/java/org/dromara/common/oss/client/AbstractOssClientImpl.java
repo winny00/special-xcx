@@ -268,6 +268,17 @@ public abstract class AbstractOssClientImpl implements OssClient {
      */
     @Override
     public HandleAsyncResult<PutObjectResponse> doCustomUpload(AsyncRequestBody body, Consumer<PutObjectRequest.Builder> putObjectRequestBuilderConsumer, Collection<TransferListener> transferListeners) {
+        // 公有云 OSS 不支持 TransferManager 的 aws-chunked 分块上传，改走 PutObject 直传
+        if (config.cloudStorage()) {
+            try {
+                PutObjectRequest.Builder builder = PutObjectRequest.builder();
+                putObjectRequestBuilderConsumer.accept(builder);
+                PutObjectResponse response = s3AsyncClient.putObject(builder.build(), body).join();
+                return HandleAsyncResult.of(response, null);
+            } catch (Exception e) {
+                return HandleAsyncResult.of(null, unwrapAsyncException(e));
+            }
+        }
         return doCustomUpload(body, putObjectRequestBuilderConsumer, transferListeners, (completedUpload, throwable) -> {
             if (completedUpload == null) {
                 return HandleAsyncResult.of(null, throwable);

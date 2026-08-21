@@ -43,7 +43,7 @@ onMounted(() => {
       :class="{ 'aside--collapsed': collapsed }"
       :style="{ width: asideWidth, flex: `0 0 ${asideWidth}` }"
     >
-      <FgSidebar :collapsed="collapsed" @toggle-collapse="toggleSidebar" />
+      <FgSidebar :collapsed="collapsed" />
     </el-aside>
     <el-container class="layout-main" direction="vertical">
       <FgHeader :collapsed="collapsed" @toggle-collapse="toggleSidebar" @logout="handleLogout" />

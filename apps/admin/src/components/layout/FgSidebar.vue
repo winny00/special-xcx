@@ -6,10 +6,6 @@ defineProps<{
   collapsed: boolean
 }>()
 
-const emit = defineEmits<{
-  'toggle-collapse': []
-}>()
-
 const route = useRoute()
 const activeMenu = computed(() => route.path)
 </script>
@@ -79,36 +75,6 @@ const activeMenu = computed(() => route.path)
         <template #title>审核中心</template>
       </el-menu-item>
     </el-menu>
-    <div class="sidebar-footer">
-      <el-tooltip
-        content="展开"
-        placement="right"
-        :disabled="!collapsed"
-      >
-        <button
-          type="button"
-          class="sidebar-toggle"
-          :class="{ 'sidebar-toggle--collapsed': collapsed }"
-          :aria-label="collapsed ? '展开' : '收起'"
-          :aria-expanded="!collapsed"
-          @click="emit('toggle-collapse')"
-        >
-          <span class="sidebar-toggle-icon" aria-hidden="true">
-            <svg v-if="collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <path d="M9 3v18" />
-              <path d="m14 9 3 3-3 3" />
-            </svg>
-            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <path d="M9 3v18" />
-              <path d="m16 15-3-3 3-3" />
-            </svg>
-          </span>
-          <span v-if="!collapsed" class="sidebar-toggle-label">收起</span>
-        </button>
-      </el-tooltip>
-    </div>
   </div>
 </template>
 
@@ -209,68 +175,5 @@ const activeMenu = computed(() => route.path)
 .menu-svg svg {
   width: 18px;
   height: 18px;
-}
-
-.sidebar-footer {
-  flex-shrink: 0;
-  margin-top: auto;
-  padding: 8px;
-  border-top: 1px solid var(--fg-border);
-  background: var(--fg-canvas);
-}
-
-.sidebar-footer :deep(.el-tooltip__trigger) {
-  display: block;
-  width: 100%;
-}
-
-.sidebar-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 1px solid var(--fg-border);
-  border-radius: var(--fg-radius-sm);
-  background: var(--fg-surface);
-  color: var(--fg-muted);
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.sidebar-toggle:hover {
-  background: var(--fg-primary-soft);
-  border-color: var(--el-color-primary-light-7);
-}
-
-.sidebar-toggle--collapsed {
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  margin: 0 auto;
-  padding: 0;
-}
-
-.sidebar-toggle-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  color: var(--fg-primary);
-}
-
-.sidebar-toggle-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.sidebar-toggle-label {
-  color: var(--fg-muted);
 }
 </style>

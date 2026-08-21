@@ -10,12 +10,21 @@
 .search-card {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
   margin-bottom: 16px;
   padding: 16px;
   background: var(--fg-surface);
   border-radius: var(--fg-radius-md);
   box-shadow: var(--fg-shadow-card);
+}
+
+.search-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .table-card {

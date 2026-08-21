@@ -137,12 +137,6 @@ onMounted(() => {
 
 <template>
   <div>
-    <div class="page-toolbar">
-      <el-button type="primary" @click="handleAdd">
-        新增
-      </el-button>
-    </div>
-
     <div class="search-card">
       <el-input v-model="query.title" clearable placeholder="标题" style="width: 220px" @keyup.enter="handleQuery" />
       <el-select v-model="query.category" clearable placeholder="分类" style="width: 140px">
@@ -159,6 +153,11 @@ onMounted(() => {
       <el-button @click="handleReset">
         重置
       </el-button>
+      <div class="search-card__actions">
+        <el-button type="primary" @click="handleAdd">
+          新增
+        </el-button>
+      </div>
     </div>
 
     <div class="table-card">

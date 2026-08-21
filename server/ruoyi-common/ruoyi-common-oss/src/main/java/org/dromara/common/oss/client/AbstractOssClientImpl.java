@@ -6,6 +6,7 @@ import org.dromara.common.core.utils.DateUtils;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.oss.config.OssClientConfig;
 import org.dromara.common.oss.exception.S3StorageException;
+import org.dromara.common.oss.util.OssCompat;
 import org.dromara.common.oss.io.OutputStreamDownloadSubscriber;
 import org.dromara.common.oss.model.GetObjectResult;
 import org.dromara.common.oss.model.HandleAsyncResult;
@@ -269,7 +270,7 @@ public abstract class AbstractOssClientImpl implements OssClient {
     @Override
     public HandleAsyncResult<PutObjectResponse> doCustomUpload(AsyncRequestBody body, Consumer<PutObjectRequest.Builder> putObjectRequestBuilderConsumer, Collection<TransferListener> transferListeners) {
         // 公有云 OSS 不支持 TransferManager 的 aws-chunked 分块上传，改走 PutObject 直传
-        if (config.cloudStorage()) {
+        if (OssCompat.isCloudService(clientId, config.endpoint().orElse(""))) {
             try {
                 PutObjectRequest.Builder builder = PutObjectRequest.builder();
                 putObjectRequestBuilderConsumer.accept(builder);
@@ -529,10 +530,12 @@ public abstract class AbstractOssClientImpl implements OssClient {
         HandleAsyncResult<PutObjectResponse> result = doCustomUpload(body, builder -> {
             builder.bucket(bucket)
                 .key(key)
-                .contentMD5(md5Digest)
                 .contentType(contentType)
                 .contentLength(contentLength)
                 .metadata(metadata);
+            if (StringUtils.isNotBlank(md5Digest)) {
+                builder.contentMD5(md5Digest);
+            }
         }, transferListeners);
         if (result.isFailure()) {
             throw toStorageException(result.error());

@@ -1,10 +1,9 @@
 package org.dromara.common.oss.client;
 
-import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.oss.config.OssAsyncExecutorConfig;
 import org.dromara.common.oss.config.OssClientConfig;
-import org.dromara.common.oss.constant.OssConstant;
 import org.dromara.common.oss.exception.S3StorageException;
+import org.dromara.common.oss.util.OssCompat;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
@@ -109,7 +108,7 @@ public class DefaultOssClientImpl extends AbstractOssClientImpl {
         S3Configuration.Builder builder = S3Configuration.builder()
             .pathStyleAccessEnabled(usePathStyleAccess);
         String endpointHost = config.endpoint().orElse("");
-        if (StringUtils.containsAny(endpointHost, OssConstant.CLOUD_SERVICE)) {
+        if (OssCompat.isCloudService(clientId, endpointHost)) {
             builder.chunkedEncodingEnabled(false);
         }
         return builder.build();

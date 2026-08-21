@@ -18,9 +18,11 @@ import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.core.query.QueryBuilder;
 import org.dromara.common.oss.client.OssClient;
 import org.dromara.common.oss.enums.AccessPolicy;
+import org.dromara.common.oss.exception.S3StorageException;
 import org.dromara.common.oss.factory.OssFactory;
 import org.dromara.common.oss.model.Options;
 import org.dromara.common.oss.model.PutObjectResult;
+import org.dromara.common.oss.util.OssCompat;
 import org.dromara.system.api.OssService;
 import org.dromara.system.api.domain.OssDTO;
 import org.dromara.system.domain.SysOss;
@@ -236,17 +238,20 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         }
         String originalfileName = file.getOriginalFilename();
         String suffix = StringUtils.substring(originalfileName, originalfileName.lastIndexOf("."), originalfileName.length());
-        OssClient instance = OssFactory.instance();
-        String pathKey = instance.buildPathKey(originalfileName);
-        try (InputStream inputStream = file.getInputStream()) {
-            PutObjectResult result = instance.upload(pathKey, inputStream, file.getSize(), Options.builder().setContentType(file.getContentType()));
-            ossExt = ossExt == null ? new SysOssExt() : ossExt;
-            ossExt.setFileSize(file.getSize());
-            ossExt.setContentType(file.getContentType());
-            // 保存文件信息
-            return buildResultEntity(originalfileName, suffix, instance.clientId(), result, ossExt);
+        try {
+            OssClient instance = OssFactory.instance();
+            String pathKey = instance.buildPathKey(originalfileName);
+            try (InputStream inputStream = file.getInputStream()) {
+                PutObjectResult result = instance.upload(pathKey, inputStream, file.getSize(), Options.builder().setContentType(file.getContentType()));
+                ossExt = ossExt == null ? new SysOssExt() : ossExt;
+                ossExt.setFileSize(file.getSize());
+                ossExt.setContentType(file.getContentType());
+                return buildResultEntity(originalfileName, suffix, instance.clientId(), result, ossExt);
+            }
         } catch (IOException e) {
             throw new ServiceException(e.getMessage());
+        } catch (S3StorageException e) {
+            throw new ServiceException(OssCompat.uploadFailMessage(e));
         }
     }
 
@@ -263,13 +268,16 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         }
         String originalfileName = file.getName();
         String suffix = StringUtils.substring(originalfileName, originalfileName.lastIndexOf("."), originalfileName.length());
-        OssClient instance = OssFactory.instance();
-        String pathKey = instance.buildPathKey(originalfileName);
-        PutObjectResult result = instance.upload(pathKey, file, Options.builder().setContentType(FileUtils.getMimeType(file.toPath())));
-        SysOssExt ext1 = ossExt == null ? new SysOssExt() : ossExt;
-        ext1.setFileSize(result.size());
-        // 保存文件信息
-        return buildResultEntity(originalfileName, suffix, instance.clientId(), result, ext1);
+        try {
+            OssClient instance = OssFactory.instance();
+            String pathKey = instance.buildPathKey(originalfileName);
+            PutObjectResult result = instance.upload(pathKey, file, Options.builder().setContentType(FileUtils.getMimeType(file.toPath())));
+            SysOssExt ext1 = ossExt == null ? new SysOssExt() : ossExt;
+            ext1.setFileSize(result.size());
+            return buildResultEntity(originalfileName, suffix, instance.clientId(), result, ext1);
+        } catch (S3StorageException e) {
+            throw new ServiceException(OssCompat.uploadFailMessage(e));
+        }
     }
 
     /**

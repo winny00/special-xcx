@@ -10,6 +10,7 @@ import org.dromara.common.oss.enums.AccessPolicy;
 import org.dromara.common.oss.exception.S3StorageException;
 import org.dromara.common.oss.properties.OssProperties;
 import org.dromara.common.oss.util.BucketUrlUtil;
+import org.dromara.common.oss.util.OssCompat;
 import org.jspecify.annotations.NonNull;
 import software.amazon.awssdk.regions.Region;
 
@@ -250,9 +251,7 @@ public class OssClientConfig implements Config<OssClientConfig, OssClientConfig.
      * 是否为阿里云/腾讯云等公有云 S3 兼容存储（非 MinIO 自建）。
      */
     public boolean cloudStorage() {
-        return endpoint()
-            .filter(endpointHost -> StringUtils.containsAny(endpointHost, OssConstant.CLOUD_SERVICE))
-            .isPresent();
+        return OssCompat.isCloudService(null, endpoint().orElse(null));
     }
 
     /**

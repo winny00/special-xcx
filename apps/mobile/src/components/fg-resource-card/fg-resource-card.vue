@@ -29,8 +29,16 @@ const priceText = computed(() => (props.item.price && props.item.price > 0) ? `Â
 </script>
 
 <template>
-  <view class="flex overflow-hidden rounded-[12px] bg-white">
+  <view class="fg-resource-card fg-surface-card fg-tap-active flex overflow-hidden">
+    <image
+      v-if="item.coverUrl"
+      :src="item.coverUrl"
+      mode="aspectFill"
+      class="h-full w-64px shrink-0"
+      style="min-height: 88px"
+    />
     <view
+      v-else
       class="flex w-64px shrink-0 items-center justify-center text-xl font-medium text-white"
       :style="{ backgroundColor: bg, minHeight: '88px' }"
     >

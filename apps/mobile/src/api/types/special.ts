@@ -27,6 +27,7 @@ export interface ISpecialOrganization {
   contactName?: string
   contactPhone?: string
   description?: string
+  coverUrl?: string
 }
 
 /** 预约申请 */

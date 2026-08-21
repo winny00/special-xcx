@@ -45,7 +45,7 @@ onMounted(() => {
     >
       <FgSidebar :collapsed="collapsed" @toggle-collapse="toggleSidebar" />
     </el-aside>
-    <el-container class="layout-main">
+    <el-container class="layout-main" direction="vertical">
       <FgHeader :collapsed="collapsed" @toggle-collapse="toggleSidebar" @logout="handleLogout" />
       <FgTabsBar />
       <el-main class="main">
@@ -87,7 +87,9 @@ onMounted(() => {
 }
 
 .layout-main {
+  flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .main {

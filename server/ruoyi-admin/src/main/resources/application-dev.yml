@@ -329,7 +329,12 @@ special:
     app-id: wxf70d043d359a1586
     app-secret: b5de3db805f9b6f14880197b5bd18696
   oss:
-    # 腾讯云 COS 配置（二期启用）
+    # 二期文件存储开关（仅文档/特性标记；实际上传走 sys_oss_config，见 Admin「系统管理 → 对象存储配置」）
+    # 本地开发：cd server/script/docker && docker compose up -d minio
+    #   - MinIO API 127.0.0.1:9000，控制台 http://127.0.0.1:9001（ruoyi / ruoyi123）
+    #   - RuoYi 默认 sys_oss_config id=1 已指向 minio bucket ruoyi，status='Y'，无需改 yml
+    # 生产 ECS：在 Admin 对象存储配置中填写腾讯云 COS（endpoint/bucket/SecretId/SecretKey），设为默认 status='Y'
+    #   - /opt/special/config/application-prod.yml 可设 enabled: true 作开关；密钥与桶名勿提交 Git
     enabled: false
     bucket: special-edu-bucket
     region: ap-guangzhou

@@ -118,12 +118,74 @@ bash /opt/special/scripts-repo/ecs/setup-https.sh api.yourdomain.com your@email.
 - 预约结果通知
 - 资源更新提醒
 
-## 7. 腾讯云 COS 配置（文件存储）
+## 7. 对象存储配置（MinIO 开发 / COS 生产）
+
+RuoYi 上传走 `POST /resource/oss/upload`，存储后端由数据库 `sys_oss_config` 决定（非 yml 直连）。`special.oss.enabled` 仅为二期特性开关。
+
+### 7.1 本地开发（MinIO）
+
+```bash
+cd server/script/docker && docker compose up -d minio
+```
+
+| 项 | 值 |
+|----|-----|
+| MinIO API | `127.0.0.1:9000` |
+| 控制台 | http://127.0.0.1:9001 |
+| 账号 | `ruoyi` / `ruoyi123` |
+
+RuoYi 默认 `sys_oss_config` id=1 已指向 `127.0.0.1:9000`、bucket `ruoyi`、`status='Y'`。启动 MinIO 后即可在 Admin 上传封面，无需改 `application-dev.yml`（其中 `special.oss.enabled` 保持 `false`）。
+
+### 7.2 生产 ECS（腾讯云 COS）
 
 1. 开通 [腾讯云 COS](https://cloud.tencent.com/product/cos)
-2. 创建存储桶 `special-edu-bucket`，区域选 `ap-guangzhou`
-3. 在 RuoYi 后台「系统管理 → OSS 配置」添加 COS 配置
-4. 将 COS 域名加入小程序 uploadFile/downloadFile 合法域名
+2. 创建存储桶 `special-edu-bucket`，区域 `ap-guangzhou`，建议公有读私有写（或绑定 CDN HTTPS 域名）
+3. 获取 SecretId / SecretKey
+4. 登录 Admin → **系统管理 → 对象存储配置** → 编辑 `qcloud` 行或新增：
+   - `config_key`: `special-cos`
+   - `endpoint`: `cos.ap-guangzhou.myqcloud.com`
+   - `bucket_name`: 你的桶名
+   - `region`: `ap-guangzhou`
+   - `is_https`: `Y`
+   - `domain_url`: 可选 CDN 自定义域名（小程序图片推荐 HTTPS）
+   - **设为默认** `status='Y'`
+5. ECS `/opt/special/config/application-prod.yml` 可写（勿提交 Git）：
+
+```yaml
+special:
+  oss:
+    enabled: true
+    bucket: special-edu-bucket
+    region: ap-guangzhou
+```
+
+（仅开关用途；实际上传仍走 Admin 对象存储配置。）
+
+### 7.3 微信小程序合法域名
+
+公众平台 → 开发 → 开发管理 → 开发设置 → 服务器域名：
+
+| 类型 | 域名示例 |
+|------|----------|
+| uploadFile 合法域名 | `https://special-edu-bucket.cos.ap-guangzhou.myqcloud.com` 或 CDN 域名 |
+| downloadFile 合法域名 | 同上 |
+
+须 **HTTPS**，不能使用 IP。本地 MinIO（`127.0.0.1:9000`）仅 Admin/H5 内测可用；小程序真机须 COS 或 CDN 域名。
+
+### 7.4 手工验证上传 API
+
+Admin 登录获取 Token 后：
+
+```bash
+curl -X POST http://localhost:8080/resource/oss/upload \
+  -H "Authorization: Bearer <token>" \
+  -H "Clientid: e5cd7e4891bf95d1d19206ce24a7b32e" \
+  -F "file=@/path/to/test.jpg"
+```
+
+Expected: `{"code":200,"data":{"url":"http(s)://...","fileName":"test.jpg","ossId":"..."}}`
+
+`Clientid` 须与 Admin 登录一致（见 `apps/admin/src/api/request.ts` 的 `CLIENT_ID`）。
 
 ## 8. 本地调试流程
 

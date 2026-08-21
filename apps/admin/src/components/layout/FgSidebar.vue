@@ -116,6 +116,7 @@ const activeMenu = computed(() => route.path)
 .fg-sidebar {
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100%;
   overflow: hidden;
 }
@@ -162,11 +163,18 @@ const activeMenu = computed(() => route.path)
 
 .side-menu {
   flex: 1;
+  width: 100% !important;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   border-right: none;
   padding: 8px;
+  box-sizing: border-box;
+}
+
+.side-menu.el-menu--collapse {
+  width: 100% !important;
+  padding: 8px 4px;
 }
 
 .side-menu :deep(.el-menu-item.is-active) {

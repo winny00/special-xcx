@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import FgSidebar from '@/components/layout/FgSidebar.vue'
 import FgHeader from '@/components/layout/FgHeader.vue'
@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/auth'
 
 const SIDEBAR_KEY = 'admin-sidebar-collapsed'
 const collapsed = ref(localStorage.getItem(SIDEBAR_KEY) === '1')
+const asideWidth = computed(() => (collapsed.value ? '64px' : '220px'))
 const route = useRoute()
 const router = useRouter()
 const tabsStore = useTabsStore()
@@ -36,7 +37,12 @@ onMounted(() => {
 
 <template>
   <el-container class="layout">
-    <el-aside :width="collapsed ? '64px' : '220px'" class="aside">
+    <el-aside
+      :width="asideWidth"
+      class="aside"
+      :class="{ 'aside--collapsed': collapsed }"
+      :style="{ width: asideWidth, flex: `0 0 ${asideWidth}` }"
+    >
       <FgSidebar :collapsed="collapsed" @toggle-collapse="toggleSidebar" />
     </el-aside>
     <el-container class="layout-main">
@@ -57,16 +63,27 @@ onMounted(() => {
 .layout {
   height: 100vh;
   min-height: 100vh;
+  overflow: hidden;
+}
+
+.layout :deep(.el-container) {
+  min-width: 0;
 }
 
 .aside {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-width: 0;
+  max-width: 220px;
   background: var(--fg-surface);
   border-right: 1px solid var(--fg-border);
-  transition: width 0.2s ease;
+  transition: width 0.2s ease, flex-basis 0.2s ease;
   overflow: hidden;
+}
+
+.aside--collapsed {
+  max-width: 64px;
 }
 
 .layout-main {

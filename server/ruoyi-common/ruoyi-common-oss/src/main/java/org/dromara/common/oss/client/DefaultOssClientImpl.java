@@ -1,7 +1,9 @@
 package org.dromara.common.oss.client;
 
+import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.oss.config.OssAsyncExecutorConfig;
 import org.dromara.common.oss.config.OssClientConfig;
+import org.dromara.common.oss.constant.OssConstant;
 import org.dromara.common.oss.exception.S3StorageException;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -56,13 +58,15 @@ public class DefaultOssClientImpl extends AbstractOssClientImpl {
         // 创建 AWS 认证信息
         StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey));
 
+        S3Configuration serviceConfiguration = buildServiceConfiguration(usePathStyleAccess);
+
         // 创建AWS基于 Netty 的 S3 客户端
         this.s3AsyncClient = S3AsyncClient.builder()
             .credentialsProvider(credentialsProvider)
             .endpointOverride(URI.create(endpointUrl))
             .region(region)
             .forcePathStyle(usePathStyleAccess)
-            .serviceConfiguration(S3Configuration.builder().build())
+            .serviceConfiguration(serviceConfiguration)
             .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED)
             .responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED)
             .httpClient(
@@ -83,9 +87,7 @@ public class DefaultOssClientImpl extends AbstractOssClientImpl {
             .region(region)
             .credentialsProvider(credentialsProvider)
             .endpointOverride(URI.create(domainUrl))
-            .serviceConfiguration(S3Configuration.builder()
-                .pathStyleAccessEnabled(usePathStyleAccess)
-                .build())
+            .serviceConfiguration(serviceConfiguration)
             .build();
 
         // 创建异步调度器对象
@@ -96,5 +98,20 @@ public class DefaultOssClientImpl extends AbstractOssClientImpl {
         } else {
             this.asyncExecutor = Executors.newScheduledThreadPool(asyncExecutorConfig.corePoolSize());
         }
+    }
+
+    /**
+     * 构建 S3 服务配置。阿里云/腾讯云等兼容存储不支持 aws-chunked encoding，需显式关闭。
+     *
+     * @see <a href="https://help.aliyun.com/zh/oss/developer-reference/use-aws-sdks-to-access-oss">阿里云 OSS AWS SDK 兼容说明</a>
+     */
+    private S3Configuration buildServiceConfiguration(boolean usePathStyleAccess) {
+        S3Configuration.Builder builder = S3Configuration.builder()
+            .pathStyleAccessEnabled(usePathStyleAccess);
+        String endpointHost = config.endpoint().orElse("");
+        if (StringUtils.containsAny(endpointHost, OssConstant.CLOUD_SERVICE)) {
+            builder.chunkedEncodingEnabled(false);
+        }
+        return builder.build();
     }
 }

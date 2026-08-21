@@ -82,11 +82,7 @@ onMounted(fetchList)
 
 <template>
   <div>
-    <div class="workbench-head">
-      <h2>预约管理</h2>
-    </div>
-
-    <div class="workbench-filter">
+    <div class="search-card">
       <el-input v-model="query.contactName" clearable placeholder="联系人" style="width: 220px" @keyup.enter="handleQuery" />
       <el-select v-model="query.appointStatus" clearable placeholder="状态" style="width: 140px">
         <el-option v-for="opt in statusOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
@@ -95,8 +91,10 @@ onMounted(fetchList)
       <el-button @click="handleReset">重置</el-button>
     </div>
 
-    <div class="workbench-card">
-      <el-table v-loading="loading" :data="tableData">
+    <div class="table-card">
+      <el-empty v-if="!loading && tableData.length === 0" description="暂无数据" />
+      <template v-else>
+        <el-table v-loading="loading" :border="false" :data="tableData">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="resourceTitle" label="资源" min-width="160" />
         <el-table-column prop="contactName" label="联系人" width="100" />
@@ -130,15 +128,17 @@ onMounted(fetchList)
             </el-dropdown>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
 
-      <el-pagination
-        v-model:current-page="pageNum"
-        :page-size="pageSize"
-        :total="total"
-        layout="total, prev, pager, next"
-        @current-change="handlePageChange"
-      />
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="handlePageChange"
+          @size-change="handleQuery"
+        />
+      </template>
     </div>
   </div>
 </template>

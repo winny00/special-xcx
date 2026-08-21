@@ -20,7 +20,7 @@ const router = createRouter({
       path: '/dashboard',
       name: 'Dashboard',
       component: () => import('@/views/dashboard/Index.vue'),
-      meta: { title: '数据概览' },
+      meta: { title: '数据概览', breadcrumb: ['数据概览'] },
     },
     {
       path: '/resource',
@@ -42,25 +42,25 @@ const router = createRouter({
       path: '/organization',
       name: 'Organization',
       component: () => import('@/views/organization/Index.vue'),
-      meta: { title: '机构管理' },
+      meta: { title: '机构管理', breadcrumb: ['机构管理'] },
     },
     {
       path: '/article',
       name: 'Article',
       component: () => import('@/views/article/Index.vue'),
-      meta: { title: '资讯管理' },
+      meta: { title: '资讯管理', breadcrumb: ['资讯管理'] },
     },
     {
       path: '/appointment',
       name: 'Appointment',
       component: () => import('@/views/appointment/Index.vue'),
-      meta: { title: '预约管理' },
+      meta: { title: '预约管理', breadcrumb: ['预约管理'] },
     },
     {
       path: '/audit',
       name: 'Audit',
       component: () => import('@/views/audit/Index.vue'),
-      meta: { title: '审核中心' },
+      meta: { title: '审核中心', breadcrumb: ['审核中心'] },
     },
   ],
 })

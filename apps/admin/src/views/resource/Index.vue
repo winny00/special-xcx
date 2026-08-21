@@ -20,16 +20,6 @@ const fixedType = computed(() => {
   return RESOURCE_TYPES.includes(type as typeof RESOURCE_TYPES[number]) ? type : 'course'
 })
 
-const pageTitle = computed(() => {
-  const map: Record<string, string> = {
-    course: '课程管理',
-    tool: '工具管理',
-    teacher: '老师资源',
-    assessment: '评估管理',
-  }
-  return map[fixedType.value] || '资源管理'
-})
-
 const loading = ref(false)
 const tableData = ref<SpecialResource[]>([])
 const total = ref(0)
@@ -191,12 +181,11 @@ onMounted(() => {
 
 <template>
   <div>
-    <div class="workbench-head">
-      <h2>{{ pageTitle }}</h2>
+    <div class="page-toolbar">
       <el-button type="primary" @click="handleAdd">新增</el-button>
     </div>
 
-    <div class="workbench-filter">
+    <div class="search-card">
       <el-input v-model="query.title" clearable placeholder="标题" style="width: 220px" @keyup.enter="handleQuery" />
       <el-select v-model="query.status" clearable placeholder="状态" style="width: 140px">
         <el-option label="草稿" :value="0" />
@@ -206,8 +195,10 @@ onMounted(() => {
       <el-button @click="handleReset">重置</el-button>
     </div>
 
-    <div class="workbench-card">
-      <el-table v-loading="loading" :data="tableData">
+    <div class="table-card">
+      <el-empty v-if="!loading && tableData.length === 0" description="暂无数据" />
+      <template v-else>
+        <el-table v-loading="loading" :border="false" :data="tableData">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column label="封面" width="80">
           <template #default="{ row }">
@@ -239,15 +230,17 @@ onMounted(() => {
             <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
 
-      <el-pagination
-        v-model:current-page="pageNum"
-        :page-size="pageSize"
-        :total="total"
-        layout="total, prev, pager, next"
-        @current-change="handlePageChange"
-      />
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="handlePageChange"
+          @size-change="handleQuery"
+        />
+      </template>
     </div>
   </div>
 

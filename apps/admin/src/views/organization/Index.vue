@@ -175,12 +175,11 @@ onMounted(async () => {
 
 <template>
   <div>
-    <div class="workbench-head">
-      <h2>机构管理</h2>
+    <div class="page-toolbar">
       <el-button type="primary" @click="handleAdd">新增</el-button>
     </div>
 
-    <div class="workbench-filter">
+    <div class="search-card">
       <el-input v-model="query.name" clearable placeholder="机构名称" style="width: 220px" @keyup.enter="handleQuery" />
       <el-select v-model="query.orgType" clearable placeholder="类型" style="width: 140px">
         <el-option v-for="t in orgTypes" :key="t.value" :label="t.label" :value="t.value" />
@@ -194,8 +193,10 @@ onMounted(async () => {
       <el-button @click="handleReset">重置</el-button>
     </div>
 
-    <div class="workbench-card">
-      <el-table v-loading="loading" :data="tableData">
+    <div class="table-card">
+      <el-empty v-if="!loading && tableData.length === 0" description="暂无数据" />
+      <template v-else>
+        <el-table v-loading="loading" :border="false" :data="tableData">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column label="封面" width="80">
           <template #default="{ row }">
@@ -233,15 +234,17 @@ onMounted(async () => {
             <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
 
-      <el-pagination
-        v-model:current-page="pageNum"
-        :page-size="pageSize"
-        :total="total"
-        layout="total, prev, pager, next"
-        @current-change="handlePageChange"
-      />
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="handlePageChange"
+          @size-change="handleQuery"
+        />
+      </template>
     </div>
   </div>
 

@@ -137,14 +137,13 @@ onMounted(() => {
 
 <template>
   <div>
-    <div class="workbench-head">
-      <h2>资讯管理</h2>
+    <div class="page-toolbar">
       <el-button type="primary" @click="handleAdd">
         新增
       </el-button>
     </div>
 
-    <div class="workbench-filter">
+    <div class="search-card">
       <el-input v-model="query.title" clearable placeholder="标题" style="width: 220px" @keyup.enter="handleQuery" />
       <el-select v-model="query.category" clearable placeholder="分类" style="width: 140px">
         <el-option v-for="c in categories" :key="c.value" :label="c.label" :value="c.value" />
@@ -162,8 +161,10 @@ onMounted(() => {
       </el-button>
     </div>
 
-    <div class="workbench-card">
-      <el-table v-loading="loading" :data="tableData">
+    <div class="table-card">
+      <el-empty v-if="!loading && tableData.length === 0" description="暂无数据" />
+      <template v-else>
+        <el-table v-loading="loading" :border="false" :data="tableData">
         <el-table-column label="封面" width="80">
           <template #default="{ row }">
             <el-image
@@ -202,21 +203,22 @@ onMounted(() => {
             </el-button>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
 
-      <div class="workbench-pagination">
         <el-pagination
           v-model:current-page="pageNum"
-          :page-size="pageSize"
+          v-model:page-size="pageSize"
           :total="total"
-          layout="total, prev, pager, next"
+          layout="total, sizes, prev, pager, next, jumper"
           @current-change="handlePageChange"
+          @size-change="handleQuery"
         />
-      </div>
+      </template>
     </div>
+  </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="640px" destroy-on-close>
-      <el-form label-width="88px">
+  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="640px" destroy-on-close>
+    <el-form label-width="90px">
         <el-form-item label="标题" required>
           <el-input v-model="form.title" maxlength="200" show-word-limit />
         </el-form-item>
@@ -260,7 +262,6 @@ onMounted(() => {
         <el-button type="primary" @click="handleSubmit">
           保存
         </el-button>
-      </template>
-    </el-dialog>
-  </div>
+    </template>
+  </el-dialog>
 </template>

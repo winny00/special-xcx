@@ -45,10 +45,6 @@ onMounted(loadStats)
 
 <template>
   <div v-loading="loading">
-    <div class="workbench-head">
-      <h2>数据概览</h2>
-    </div>
-
     <div v-if="stats" class="dashboard-grid">
       <div v-for="card in statCards" :key="card.label" class="stat-card">
         <div class="stat-card__head">
@@ -76,6 +72,15 @@ onMounted(loadStats)
           </div>
         </div>
       </div>
+      <div class="quick-links">
+        <router-link to="/resource/course">课程管理</router-link>
+        <router-link to="/resource/tool">工具管理</router-link>
+        <router-link to="/resource/teacher">老师资源</router-link>
+        <router-link to="/resource/assessment">评估管理</router-link>
+        <router-link to="/organization">机构管理</router-link>
+        <router-link to="/appointment">预约管理</router-link>
+        <router-link to="/audit">审核中心</router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -93,6 +98,11 @@ onMounted(loadStats)
   padding: 18px 20px;
   box-shadow: 0 2px 12px rgba(28, 43, 40, 0.06);
   border: 1px solid #e7f4f0;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(28, 43, 40, 0.1);
+  }
 }
 .stat-card__head {
   display: flex;
@@ -161,5 +171,28 @@ onMounted(loadStats)
   border-radius: 999px;
   background: #1b7f6b;
   transition: width 0.3s ease;
+}
+.quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e7f4f0;
+}
+.quick-links a {
+  font-size: 13px;
+  color: #1b7f6b;
+  text-decoration: none;
+  line-height: 1.5;
+}
+.quick-links a:hover {
+  color: #156b5a;
+  text-decoration: underline;
+}
+.quick-links a:focus-visible {
+  outline: 3px solid #1b7f6b;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 </style>

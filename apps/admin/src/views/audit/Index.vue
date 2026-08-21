@@ -71,14 +71,11 @@ onMounted(() => {
 
 <template>
   <div>
-    <div class="workbench-head">
-      <h2>审核中心</h2>
-    </div>
-
-    <div class="workbench-card">
+    <div class="table-card">
       <el-tabs v-model="activeTab" @tab-change="handleTabChange">
         <el-tab-pane label="机构待审" name="org">
-          <el-table v-loading="orgLoading" :data="orgList">
+          <el-empty v-if="!orgLoading && orgList.length === 0" description="暂无待审机构" />
+          <el-table v-else v-loading="orgLoading" :border="false" :data="orgList">
             <el-table-column prop="name" label="机构名称" min-width="160" />
             <el-table-column prop="orgType" label="类型" width="100" />
             <el-table-column prop="region" label="地区" width="120" />
@@ -91,7 +88,8 @@ onMounted(() => {
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="资源草稿" name="resource">
-          <el-table v-loading="resourceLoading" :data="resourceList">
+          <el-empty v-if="!resourceLoading && resourceList.length === 0" description="暂无资源草稿" />
+          <el-table v-else v-loading="resourceLoading" :border="false" :data="resourceList">
             <el-table-column prop="title" label="标题" min-width="160" />
             <el-table-column prop="resourceType" label="类型" width="100" />
             <el-table-column prop="providerName" label="提供方" width="120" />

@@ -11,7 +11,7 @@ on:
   workflow_call:
     inputs:
       run_migrations:
-        description: 执行 phase2a SQL 增量
+        description: 执行 SQL 增量（phase2 + identity-roles）
         type: boolean
         default: true
   push:
@@ -21,13 +21,14 @@ on:
       - 'scripts/ecs/migrate-phase2a.sql'
       - 'scripts/ecs/migrate-phase2b-parent.sql'
       - 'scripts/ecs/migrate-phase2b-teacher-audit.sql'
+      - 'scripts/ecs/migrate-identity-roles.sql'
       - 'scripts/ecs/nginx-special.conf'
       - 'scripts/ecs/deploy-server.sh'
       - '.github/workflows/deploy-server.yml'
   workflow_dispatch:
     inputs:
       run_migrations:
-        description: 执行 phase2a SQL 增量（建表/菜单）
+        description: 执行 SQL 增量（建表/菜单/身份角色）
         type: boolean
         default: true
 
@@ -99,7 +100,7 @@ jobs:
           echo "key_file=${KEY_FILE}" >> "$GITHUB_OUTPUT"
           echo "SSH target ${ECS_USERNAME}@${ECS_HOST}"
 
-      - name: Run DB migrations (phase2a / phase2b parent CRM)
+      - name: Run DB migrations (phase2a / phase2b / identity-roles)
         if: |
           github.event_name == 'push' ||
           (github.event_name == 'workflow_dispatch' && inputs.run_migrations != false) ||
@@ -114,6 +115,7 @@ jobs:
             scripts/ecs/migrate-phase2a.sql \
             scripts/ecs/migrate-phase2b-parent.sql \
             scripts/ecs/migrate-phase2b-teacher-audit.sql \
+            scripts/ecs/migrate-identity-roles.sql \
             "${ECS_USERNAME}@${ECS_HOST}:/tmp/"
           ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
             "${ECS_USERNAME}@${ECS_HOST}" 'bash -s' <<'REMOTE'
@@ -129,8 +131,9 @@ jobs:
           mysql -uroot -p"$MYSQL_PWD" "$DB_NAME" < /tmp/migrate-phase2a.sql
           mysql -uroot -p"$MYSQL_PWD" "$DB_NAME" < /tmp/migrate-phase2b-parent.sql
           mysql -uroot -p"$MYSQL_PWD" "$DB_NAME" < /tmp/migrate-phase2b-teacher-audit.sql
-          rm -f /tmp/migrate-phase2a.sql /tmp/migrate-phase2b-parent.sql /tmp/migrate-phase2b-teacher-audit.sql
-          echo "phase2a / parent / teacher-audit migrations applied"
+          mysql -uroot -p"$MYSQL_PWD" "$DB_NAME" < /tmp/migrate-identity-roles.sql
+          rm -f /tmp/migrate-phase2a.sql /tmp/migrate-phase2b-parent.sql /tmp/migrate-phase2b-teacher-audit.sql /tmp/migrate-identity-roles.sql
+          echo "phase2a / parent / teacher-audit / identity-roles migrations applied"
           REMOTE
 
       - name: Deploy jar and restart backend

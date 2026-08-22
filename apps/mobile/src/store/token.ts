@@ -12,6 +12,7 @@ import {
   getWxCode,
 } from '@/api/login'
 import { isDoubleTokenRes, isSingleTokenRes } from '@/api/types/login'
+import { clearCurrentRole, readCachedRole, resolveRole, writeCachedRole } from '@/utils/current-role'
 import { useUserStore } from './user'
 
 /**
@@ -109,7 +110,11 @@ export const useTokenStore = defineStore(
     async function _postLogin(tokenInfo: IAuthLoginRes) {
       setTokenInfo(tokenInfo)
       const userStore = useUserStore()
-      await userStore.fetchUserInfo()
+      const info = await userStore.fetchUserInfo()
+      const role = resolveRole(readCachedRole(), info.roles ?? [])
+      if (role) {
+        writeCachedRole(role)
+      }
     }
 
     /**
@@ -203,6 +208,7 @@ export const useTokenStore = defineStore(
         console.log('退出登录-清除用户信息')
         tokenInfo.value = { ...tokenInfoState }
         uni.removeStorageSync('token')
+        clearCurrentRole()
         const userStore = useUserStore()
         userStore.clearUserInfo()
       }

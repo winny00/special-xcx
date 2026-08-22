@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { REGISTER_PAGE } from '@/router/config'
 import { useTokenStore } from '@/store/token'
 
 definePage({
@@ -15,6 +16,10 @@ function toast(title: string) {
   uni.showToast({ title, icon: 'none' })
 }
 
+function goRegister() {
+  uni.navigateTo({ url: REGISTER_PAGE })
+}
+
 async function doLogin() {
   if (tokenStore.hasLogin) {
     uni.navigateBack()
@@ -23,7 +28,7 @@ async function doLogin() {
   const name = username.value.trim()
   const pwd = password.value.trim()
   if (!name) {
-    toast('请输入账号')
+    toast('请输入手机号')
     return
   }
   if (!pwd) {
@@ -66,11 +71,13 @@ async function doWxLogin() {
 
     <view class="mx-4 -mt-6 fg-surface-card px-5 py-6">
       <view class="mb-4">
-        <text class="mb-2 block text-sm text-muted">账号</text>
+        <text class="mb-2 block text-sm text-muted">手机号</text>
         <input
           v-model="username"
           class="h-11 w-full rounded-lg bg-[#F4F7F6] px-3 text-base text-[#1C2B28]"
-          placeholder="请输入账号，如 admin"
+          type="number"
+          maxlength="11"
+          placeholder="请输入手机号"
           confirm-type="next"
         >
       </view>
@@ -80,7 +87,7 @@ async function doWxLogin() {
           v-model="password"
           class="h-11 w-full rounded-lg bg-[#F4F7F6] px-3 text-base text-[#1C2B28]"
           password
-          placeholder="请输入密码，如 admin123"
+          placeholder="请输入密码"
           confirm-type="done"
         >
       </view>
@@ -94,6 +101,12 @@ async function doWxLogin() {
         </wd-button>
       </view>
       <!-- #endif -->
+      <view
+        class="mt-2 flex h-11 items-center justify-center"
+        @click="goRegister"
+      >
+        <text class="text-base text-[#1B7F6B]">没有账号？去注册</text>
+      </view>
     </view>
   </view>
 </template>

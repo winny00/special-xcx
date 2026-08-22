@@ -11,6 +11,7 @@ unpackage/
 .env.*
 !.env.example
 .superpowers/
+.worktrees/
 
 # 微信 CI 上传私钥（仅 Jenkins Credentials）
 apps/mobile/private*.key

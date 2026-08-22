@@ -4,9 +4,11 @@ import org.dromara.common.core.domain.PageResult;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.special.domain.bo.BindPhoneBody;
 import org.dromara.special.domain.bo.SpecialMobileProfileBo;
+import org.dromara.special.domain.bo.SpecialTeacherBo;
 import org.dromara.special.domain.vo.SpecialAppointmentVo;
 import org.dromara.special.domain.vo.SpecialBindPhoneVo;
 import org.dromara.special.domain.vo.SpecialMobileProfileVo;
+import org.dromara.special.domain.vo.SpecialTeacherVo;
 
 /**
  * 移动端家长中心 Service
@@ -39,5 +41,15 @@ public interface ISpecialMobileMeService {
      * 绑定手机号：写号或合并微信临时用户，返回可供前端替换的 token。
      */
     SpecialBindPhoneVo bindPhone(BindPhoneBody body);
+
+    /**
+     * 当前登录用户自己的老师档案（按 userId）。
+     */
+    SpecialTeacherVo getMyTeacherProfile();
+
+    /**
+     * 更新自己的老师档案；不可改审核状态。
+     */
+    Boolean updateMyTeacherProfile(SpecialTeacherBo bo);
 
 }

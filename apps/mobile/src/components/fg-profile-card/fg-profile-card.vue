@@ -4,6 +4,7 @@ defineProps<{
   hint: string
   loggedIn: boolean
   avatarUrl?: string
+  roleLabel?: string
 }>()
 
 const emit = defineEmits<{
@@ -25,8 +26,16 @@ const emit = defineEmits<{
           {{ displayName.slice(0, 1) }}
         </view>
         <view class="ml-3 min-w-0 flex-1">
-          <view class="truncate text-lg font-semibold text-[#1C2B28]">
-            {{ displayName }}
+          <view class="flex min-h-11 items-center gap-2">
+            <view class="truncate text-lg font-semibold text-[#1C2B28]">
+              {{ displayName }}
+            </view>
+            <view
+              v-if="loggedIn && roleLabel"
+              class="role-tag"
+            >
+              {{ roleLabel }}
+            </view>
           </view>
           <view class="mt-1 truncate text-sm text-muted">
             {{ hint }}
@@ -72,5 +81,17 @@ const emit = defineEmits<{
   background: var(--color-primary);
   font-size: 14px;
   color: #fff;
+}
+.role-tag {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--color-primary);
 }
 </style>

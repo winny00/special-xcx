@@ -3,7 +3,12 @@ import type { ISpecialArticle, ISpecialResource } from '@/api/types/special'
 import { ARTICLE_CATEGORY_MAP } from '@/api/types/special'
 import { RESOURCE_CATEGORIES } from '@/api/types/special'
 import { getArticleList, getResourceList } from '@/api/special'
+import { getMyAppointments, getMyTeacherProfile } from '@/api/me'
 import { useCapsuleNav } from '@/hooks/useCapsuleNav'
+import { APPOINTMENTS_PAGE, BIND_PHONE_PAGE, LOGIN_PAGE } from '@/router/config'
+import { useUserStore } from '@/store'
+import { useTokenStore } from '@/store/token'
+import { isTeacherRole, readCachedRole } from '@/utils/current-role'
 import { openResourceList } from '@/utils/resource-nav'
 
 definePage({
@@ -15,6 +20,8 @@ definePage({
 })
 
 const { headerPaddingStyle, capsuleRowStyle } = useCapsuleNav()
+const tokenStore = useTokenStore()
+const userStore = useUserStore()
 
 const loading = ref(true)
 const resources = ref<ISpecialResource[]>([])
@@ -22,6 +29,12 @@ const articles = ref<ISpecialArticle[]>([])
 const articlesLoading = ref(true)
 const activeCategory = ref('')
 const keyword = ref('')
+const currentRole = ref(readCachedRole())
+const teacherName = ref('')
+const pendingCount = ref(0)
+const teacherLoading = ref(false)
+
+const isTeacherHome = computed(() => tokenStore.hasLogin && isTeacherRole(currentRole.value))
 
 const shortcuts = [
   { label: '课程', image: '/static/shortcuts/course.png', action: 'course' },
@@ -97,7 +110,7 @@ function goShortcut(action: string) {
 }
 
 function goDetail(id: string | number) {
-  uni.navigateTo({ url: `/pages/resource/detail?id=${id}` })
+  uni.navigateTo({ url: `/pages/resource/detail?id=${String(id)}` })
 }
 
 function goArticleList() {
@@ -112,9 +125,57 @@ function formatArticleDate(value?: string) {
   return value ? value.slice(0, 10) : ''
 }
 
-onLoad(() => {
-  loadResources()
-  loadArticles()
+async function loadTeacherHome() {
+  teacherLoading.value = true
+  teacherName.value = userStore.userInfo.nickname || userStore.userInfo.username || '老师'
+  pendingCount.value = 0
+  try {
+    const profile = await getMyTeacherProfile()
+    if (profile?.name) {
+      teacherName.value = profile.name
+    }
+  }
+  catch (e) {
+    console.error('加载老师资料失败', e)
+  }
+  try {
+    const res = await getMyAppointments({ pageNum: 1, pageSize: 50 })
+    pendingCount.value = (res.rows || []).filter(item => (item.appointStatus ?? 0) === 0).length
+  }
+  catch (e) {
+    console.error('加载预约失败', e)
+  }
+  finally {
+    teacherLoading.value = false
+  }
+}
+
+function goTeacherAppointments() {
+  if (!tokenStore.hasLogin) {
+    uni.navigateTo({ url: LOGIN_PAGE })
+    return
+  }
+  if (userStore.userInfo.phoneBound === false) {
+    uni.navigateTo({
+      url: `${BIND_PHONE_PAGE}?redirect=${encodeURIComponent(APPOINTMENTS_PAGE)}`,
+    })
+    return
+  }
+  uni.navigateTo({ url: APPOINTMENTS_PAGE })
+}
+
+onShow(() => {
+  currentRole.value = readCachedRole()
+  if (isTeacherHome.value) {
+    loadTeacherHome()
+    return
+  }
+  if (resources.value.length === 0) {
+    loadResources()
+  }
+  if (articles.value.length === 0) {
+    loadArticles()
+  }
 })
 </script>
 
@@ -123,13 +184,17 @@ onLoad(() => {
     <view class="fg-hero-gradient px-4 pb-4" :style="headerPaddingStyle">
       <view :style="capsuleRowStyle">
         <view class="text-lg font-semibold text-[#1C2B28]">
-          你好，需要什么帮助？
+          {{ isTeacherHome ? `你好，${teacherName || '老师'}` : '你好，需要什么帮助？' }}
         </view>
         <view class="mt-1 text-sm text-muted">
-          为特需家庭对接可靠课程、老师与机构
+          {{ isTeacherHome ? '查看待处理预约，管理自己的老师资料' : '为特需家庭对接可靠课程、老师与机构' }}
         </view>
       </view>
-      <view class="fg-surface-card mt-4 flex min-h-11 items-center px-4 fg-tap-active" @click="goSearch">
+      <view
+        v-if="!isTeacherHome"
+        class="fg-surface-card mt-4 flex min-h-11 items-center px-4 fg-tap-active"
+        @click="goSearch"
+      >
         <text class="i-carbon-search mr-2 text-muted" />
         <input
           v-model="keyword"
@@ -141,6 +206,26 @@ onLoad(() => {
         >
       </view>
     </view>
+
+    <view v-if="isTeacherHome" class="mx-3 mt-3">
+      <fg-skeleton-block v-if="teacherLoading" :rows="1" />
+      <view v-else class="teacher-card fg-surface-card p-4">
+        <view class="text-base font-semibold text-[#1C2B28]">
+          {{ teacherName || '老师' }}
+        </view>
+        <view class="mt-2 text-base text-muted">
+          待处理预约 {{ pendingCount }} 条
+        </view>
+        <view
+          class="teacher-cta fg-tap-active mt-4"
+          @click="goTeacherAppointments"
+        >
+          查看收到的预约
+        </view>
+      </view>
+    </view>
+
+    <template v-else>
 
     <view class="shortcut-row mx-3 -mt-1 fg-surface-card px-2 py-4">
       <view
@@ -242,6 +327,7 @@ onLoad(() => {
         </view>
       </view>
     </view>
+    </template>
   </view>
 </template>
 
@@ -315,5 +401,15 @@ onLoad(() => {
   justify-content: center;
   background: var(--color-primary-soft);
   color: var(--color-primary);
+}
+.teacher-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 12px;
+  background: var(--color-primary);
+  font-size: 16px;
+  color: #fff;
 }
 </style>

@@ -10,6 +10,7 @@ import org.dromara.special.domain.SpecialAppointment;
 import org.dromara.special.domain.bo.BindPhoneBody;
 import org.dromara.special.domain.vo.SpecialBindPhoneVo;
 import org.dromara.special.mapper.SpecialAppointmentMapper;
+import org.dromara.special.mapper.SpecialTeacherMapper;
 import org.dromara.special.service.ISpecialAppointmentService;
 import org.dromara.special.util.SpecialIdentitySupport;
 import org.dromara.system.api.model.XcxLoginUser;
@@ -88,6 +89,8 @@ class SpecialMobileMeServiceImplBindPhoneTest {
     private ISysClientService clientService;
     @Mock
     private ISysPermissionService permissionService;
+    @Mock
+    private SpecialTeacherMapper teacherMapper;
 
     private SpecialMobileMeServiceImpl service;
     private BindPhoneBody body;
@@ -97,7 +100,7 @@ class SpecialMobileMeServiceImplBindPhoneTest {
         Function<String, String> smsCodes = phone -> SMS_CODE;
         service = new SpecialMobileMeServiceImpl(
             userService, appointmentService, appointmentMapper, socialMapper, socialService,
-            roleService, userRoleMapper, clientService, permissionService, smsCodes);
+            roleService, userRoleMapper, clientService, permissionService, teacherMapper, smsCodes);
         body = new BindPhoneBody();
         body.setPhone(PHONE);
         body.setSmsCode(SMS_CODE);
@@ -106,7 +109,7 @@ class SpecialMobileMeServiceImplBindPhoneTest {
     @Test
     void productionConstructorIsAutowiredForSpring() {
         Constructor<?> production = Arrays.stream(SpecialMobileMeServiceImpl.class.getDeclaredConstructors())
-            .filter(ctor -> ctor.getParameterCount() == 9)
+            .filter(ctor -> ctor.getParameterCount() == 10)
             .findFirst()
             .orElseThrow();
         assertTrue(production.isAnnotationPresent(Autowired.class));

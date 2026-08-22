@@ -3,6 +3,7 @@ import type { IMyAppointment } from '@/api/me'
 import { APPOINTMENT_STATUS_MAP, getMyAppointments } from '@/api/me'
 import { LOGIN_PAGE } from '@/router/config'
 import { useTokenStore } from '@/store/token'
+import { isTeacherRole, readCachedRole } from '@/utils/current-role'
 
 definePage({
   style: {
@@ -71,6 +72,9 @@ function formatDate(value?: string) {
 }
 
 onShow(() => {
+  uni.setNavigationBarTitle({
+    title: isTeacherRole(readCachedRole()) ? '收到的预约' : '我的预约',
+  })
   if (!tokenStore.hasLogin) {
     loading.value = false
     return

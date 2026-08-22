@@ -40,3 +40,27 @@ export function syncCachedRole(owned: string[]): void {
   }
   clearCurrentRole()
 }
+
+export function isTeacherRole(role: string): boolean {
+  return role === 'special_teacher'
+}
+
+export function roleTagLabel(role: string): '老师' | '家长' {
+  return isTeacherRole(role) ? '老师' : '家长'
+}
+
+export function canSwitchIdentity(owned: string[]): boolean {
+  return owned.includes('special_parent') && owned.includes('special_teacher')
+}
+
+export function planColdStartRole(
+  cached: string,
+  owned: string[],
+  serverCurrentRole?: string,
+): { role: SpecialRoleKey | '', shouldPut: boolean } {
+  const role = resolveRole(cached, owned)
+  return {
+    role,
+    shouldPut: Boolean(role) && role !== serverCurrentRole,
+  }
+}

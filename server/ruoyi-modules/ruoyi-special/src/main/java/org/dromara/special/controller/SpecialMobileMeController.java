@@ -8,9 +8,11 @@ import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.web.core.BaseController;
 import org.dromara.special.domain.bo.BindPhoneBody;
 import org.dromara.special.domain.bo.SpecialMobileProfileBo;
+import org.dromara.special.domain.bo.SpecialTeacherBo;
 import org.dromara.special.domain.vo.SpecialAppointmentVo;
 import org.dromara.special.domain.vo.SpecialBindPhoneVo;
 import org.dromara.special.domain.vo.SpecialMobileProfileVo;
+import org.dromara.special.domain.vo.SpecialTeacherVo;
 import org.dromara.special.service.ISpecialMobileMeService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -67,6 +69,22 @@ public class SpecialMobileMeController extends BaseController {
     @PostMapping("/bind-phone")
     public R<SpecialBindPhoneVo> bindPhone(@RequestBody BindPhoneBody body) {
         return R.ok(mobileMeService.bindPhone(body));
+    }
+
+    /**
+     * 当前用户老师档案
+     */
+    @GetMapping("/teacher-profile")
+    public R<SpecialTeacherVo> teacherProfile() {
+        return R.ok(mobileMeService.getMyTeacherProfile());
+    }
+
+    /**
+     * 更新当前用户老师档案（不可改审核状态）
+     */
+    @PutMapping("/teacher-profile")
+    public R<Void> updateTeacherProfile(@RequestBody SpecialTeacherBo bo) {
+        return toAjax(mobileMeService.updateMyTeacherProfile(bo));
     }
 
 }

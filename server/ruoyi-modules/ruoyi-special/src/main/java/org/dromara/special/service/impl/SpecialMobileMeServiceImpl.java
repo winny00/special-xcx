@@ -23,7 +23,11 @@ import org.dromara.special.domain.bo.BindPhoneBody;
 import org.dromara.special.domain.vo.SpecialAppointmentVo;
 import org.dromara.special.domain.vo.SpecialBindPhoneVo;
 import org.dromara.special.domain.vo.SpecialMobileProfileVo;
+import org.dromara.special.domain.SpecialTeacher;
+import org.dromara.special.domain.bo.SpecialTeacherBo;
+import org.dromara.special.domain.vo.SpecialTeacherVo;
 import org.dromara.special.mapper.SpecialAppointmentMapper;
+import org.dromara.special.mapper.SpecialTeacherMapper;
 import org.dromara.special.service.ISpecialAppointmentService;
 import org.dromara.special.service.ISpecialMobileMeService;
 import org.dromara.special.util.SpecialBindPhonePlanner;
@@ -53,6 +57,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -76,6 +81,7 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
     private final SysUserRoleMapper userRoleMapper;
     private final ISysClientService clientService;
     private final ISysPermissionService permissionService;
+    private final SpecialTeacherMapper teacherMapper;
     private final Function<String, String> smsCodeLookup;
 
     @Autowired
@@ -88,10 +94,11 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         ISysRoleService roleService,
         SysUserRoleMapper userRoleMapper,
         ISysClientService clientService,
-        ISysPermissionService permissionService
+        ISysPermissionService permissionService,
+        SpecialTeacherMapper teacherMapper
     ) {
         this(userService, appointmentService, appointmentMapper, socialMapper, socialService,
-            roleService, userRoleMapper, clientService, permissionService,
+            roleService, userRoleMapper, clientService, permissionService, teacherMapper,
             SpecialMobileMeServiceImpl::readAndConsumeSmsCode);
     }
 
@@ -105,6 +112,7 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         SysUserRoleMapper userRoleMapper,
         ISysClientService clientService,
         ISysPermissionService permissionService,
+        SpecialTeacherMapper teacherMapper,
         Function<String, String> smsCodeLookup
     ) {
         this.userService = userService;
@@ -116,6 +124,7 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         this.userRoleMapper = userRoleMapper;
         this.clientService = clientService;
         this.permissionService = permissionService;
+        this.teacherMapper = teacherMapper;
         this.smsCodeLookup = Objects.requireNonNull(smsCodeLookup);
     }
 
@@ -132,21 +141,58 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         vo.setUserId(userId);
         vo.setNickname(StringUtils.isNotBlank(user.getNickName()) ? user.getNickName() : user.getUserName());
         vo.setAvatar(user.getAvatarUrl());
+        vo.setPhoneBound(StringUtils.isNotBlank(user.getPhoneNumber()));
         if (StringUtils.isNotBlank(user.getPhoneNumber())) {
             vo.setPhone(DesensitizedUtil.mobilePhone(user.getPhoneNumber()));
         }
 
-        RoleDTO role = resolvePrimaryRole(loginUser);
+        String currentRole = SpecialCurrentRoleStore.read();
+        vo.setCurrentRole(currentRole);
+        if (loginUser != null && loginUser.getRolePermission() != null) {
+            vo.setRoles(new ArrayList<>(loginUser.getRolePermission()));
+        }
+        RoleDTO role = matchRole(loginUser, currentRole);
         if (role != null) {
             vo.setRoleKey(role.getRoleKey());
             vo.setRoleName(role.getRoleName());
-        }
-        else if (loginUser != null && loginUser.getRolePermission() != null && !loginUser.getRolePermission().isEmpty()) {
-            String roleKey = loginUser.getRolePermission().iterator().next();
-            vo.setRoleKey(roleKey);
-            vo.setRoleName(roleKey);
+        } else {
+            vo.setRoleKey(currentRole);
         }
         return vo;
+    }
+
+    @Override
+    public SpecialTeacherVo getMyTeacherProfile() {
+        requireTeacherIdentity();
+        SpecialTeacherVo vo = teacherMapper.selectVoOne(
+            Wrappers.<SpecialTeacher>lambdaQuery().eq(SpecialTeacher::getUserId, LoginHelper.getUserId()),
+            false);
+        if (vo == null) {
+            throw new ServiceException("老师档案不存在");
+        }
+        return vo;
+    }
+
+    @Override
+    public Boolean updateMyTeacherProfile(SpecialTeacherBo bo) {
+        requireTeacherIdentity();
+        SpecialTeacher existing = teacherMapper.selectOne(
+            Wrappers.<SpecialTeacher>lambdaQuery().eq(SpecialTeacher::getUserId, LoginHelper.getUserId()));
+        if (existing == null) {
+            throw new ServiceException("老师档案不存在");
+        }
+        SpecialTeacher update = new SpecialTeacher();
+        update.setId(existing.getId());
+        if (bo != null) {
+            update.setName(bo.getName());
+            update.setTitle(bo.getTitle());
+            update.setSpecialties(bo.getSpecialties());
+            update.setQualification(bo.getQualification());
+            update.setCertImageUrl(bo.getCertImageUrl());
+            update.setAvatarUrl(bo.getAvatarUrl());
+            update.setIntro(bo.getIntro());
+        }
+        return teacherMapper.updateById(update) > 0;
     }
 
     @Override
@@ -450,16 +496,22 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         return SpecialIdentitySupport.XCX_CLIENT_ID;
     }
 
-    private RoleDTO resolvePrimaryRole(LoginUser loginUser) {
-        if (loginUser == null || loginUser.getRoles() == null || loginUser.getRoles().isEmpty()) {
+    private void requireTeacherIdentity() {
+        if (!SpecialIdentitySupport.TEACHER_ROLE_KEY.equals(SpecialCurrentRoleStore.read())) {
+            throw new ServiceException("当前账号没有该身份");
+        }
+    }
+
+    private RoleDTO matchRole(LoginUser loginUser, String roleKey) {
+        if (loginUser == null || loginUser.getRoles() == null || StringUtils.isBlank(roleKey)) {
             return null;
         }
         for (RoleDTO role : loginUser.getRoles()) {
-            if ("special_parent".equals(role.getRoleKey())) {
+            if (role != null && roleKey.equals(role.getRoleKey())) {
                 return role;
             }
         }
-        return loginUser.getRoles().getFirst();
+        return null;
     }
 
     private static String readAndConsumeSmsCode(String phone) {

@@ -82,6 +82,7 @@ export const ARTICLE_CATEGORIES = ['policy', 'news', 'guide'] as const
 /** 特教老师档案 */
 export interface ISpecialTeacher {
   id: string | number
+  userId?: string | number
   name: string
   title?: string
   specialties?: string

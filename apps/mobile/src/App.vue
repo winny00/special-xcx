@@ -4,14 +4,19 @@ import { getCurrentInstance, onMounted, onUnmounted } from 'vue'
 import { navigateToInterceptor } from '@/router/interceptor'
 import { tabbarStore } from '@/tabbar/store'
 import { permission } from '@/router/permission'
+import { useTokenStore } from '@/store/token'
 
 const { proxy } = (getCurrentInstance() || {}) as any
 const router = proxy?.$router
 
 router && permission.install(router)
 
-onLaunch((options) => {
+onLaunch(async (options) => {
   console.log('App.vue onLaunch', options)
+  const tokenStore = useTokenStore()
+  if (tokenStore.hasLogin) {
+    await tokenStore.restoreSessionRole()
+  }
 })
 onShow((options) => {
   console.log('App.vue onShow', options)

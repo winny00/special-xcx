@@ -21,6 +21,7 @@ class SpecialIdentitySupportTest {
         assertFalse(SpecialIdentitySupport.isPhoneLogin("admin"));
         assertFalse(SpecialIdentitySupport.isPhoneLogin("1380013800"));
         assertFalse(SpecialIdentitySupport.isPhoneLogin(null));
+        assertFalse(SpecialIdentitySupport.isPhoneLogin("１３８００１３８０００"));
     }
 
     @Test

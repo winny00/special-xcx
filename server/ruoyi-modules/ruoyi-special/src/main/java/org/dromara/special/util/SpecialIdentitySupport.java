@@ -21,7 +21,8 @@ public final class SpecialIdentitySupport {
             return false;
         }
         for (int i = 0; i < username.length(); i++) {
-            if (!Character.isDigit(username.charAt(i))) {
+            char c = username.charAt(i);
+            if (c < '0' || c > '9') {
                 return false;
             }
         }

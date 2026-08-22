@@ -61,4 +61,27 @@ public final class SpecialCurrentRoleStore {
         Object value = StpUtil.getTokenSession().get(SESSION_KEY);
         return value == null ? null : String.valueOf(value);
     }
+
+    /**
+     * getInfo：有会话角色则沿用；空则按老师/非超管选 PC client，否则 xcx，再走 {@link #pickRoleForLogin}。
+     * 不把 {@code LoginUser.clientKey} 映射成 client UUID。
+     */
+    public static String resolveForGetInfo(String sessionRole, Set<String> roleKeys) {
+        if (sessionRole != null && !sessionRole.isBlank()) {
+            return sessionRole;
+        }
+        return pickRoleForLogin(SpecialIdentitySupport.clientIdForEmptyCurrentRole(roleKeys), roleKeys);
+    }
+
+    /**
+     * 读会话 currentRole；为空则按 {@link #resolveForGetInfo} 填回会话。
+     */
+    public static String readOrFill(Set<String> roleKeys) {
+        String current = read();
+        String resolved = resolveForGetInfo(current, roleKeys);
+        if (current == null || current.isBlank()) {
+            write(resolved);
+        }
+        return resolved;
+    }
 }

@@ -40,6 +40,27 @@ class SpecialIdentitySupportTest {
     }
 
     @Test
+    void switchErrorRejectsUnownedIdentity() {
+        assertEquals("当前账号没有该身份",
+            SpecialIdentitySupport.switchError(Set.of("special_parent"), "special_teacher"));
+        assertNull(SpecialIdentitySupport.switchError(Set.of("special_parent", "special_teacher"), "special_teacher"));
+    }
+
+    @Test
+    void emptySessionClientIdIsPcOnlyForNonSuperadminTeacher() {
+        assertEquals(SpecialIdentitySupport.PC_CLIENT_ID,
+            SpecialIdentitySupport.clientIdForEmptyCurrentRole(Set.of("special_teacher")));
+        assertEquals(SpecialIdentitySupport.PC_CLIENT_ID,
+            SpecialIdentitySupport.clientIdForEmptyCurrentRole(Set.of("special_parent", "special_teacher")));
+        assertEquals(SpecialIdentitySupport.XCX_CLIENT_ID,
+            SpecialIdentitySupport.clientIdForEmptyCurrentRole(Set.of("superadmin")));
+        assertEquals(SpecialIdentitySupport.XCX_CLIENT_ID,
+            SpecialIdentitySupport.clientIdForEmptyCurrentRole(Set.of("superadmin", "special_teacher")));
+        assertEquals(SpecialIdentitySupport.XCX_CLIENT_ID,
+            SpecialIdentitySupport.clientIdForEmptyCurrentRole(Set.of("special_parent")));
+    }
+
+    @Test
     void pcAccess() {
         assertTrue(SpecialIdentitySupport.canAccessPcAdmin(Set.of("superadmin")));
         assertTrue(SpecialIdentitySupport.canAccessPcAdmin(Set.of("special_teacher", "special_parent")));

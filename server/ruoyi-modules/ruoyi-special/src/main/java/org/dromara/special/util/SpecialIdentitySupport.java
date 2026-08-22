@@ -52,11 +52,34 @@ public final class SpecialIdentitySupport {
         return PARENT_ROLE_KEY.equals(target) || TEACHER_ROLE_KEY.equals(target);
     }
 
+    /**
+     * 非法切换时返回失败文案，合法则 null。
+     */
+    public static String switchError(Set<String> owned, String target) {
+        if (canSwitchTo(owned, target)) {
+            return null;
+        }
+        return "当前账号没有该身份";
+    }
+
     public static boolean canAccessPcAdmin(Set<String> roleKeys) {
         if (roleKeys == null || roleKeys.isEmpty()) {
             return false;
         }
         return roleKeys.contains(SUPERADMIN_ROLE_KEY) || roleKeys.contains(TEACHER_ROLE_KEY);
+    }
+
+    /**
+     * getInfo 会话空时选用的 clientId。不把 LoginUser.clientKey 映射成 UUID。
+     */
+    public static String clientIdForEmptyCurrentRole(Set<String> roleKeys) {
+        if (canAccessPcAdmin(roleKeys)
+            && roleKeys != null
+            && roleKeys.contains(TEACHER_ROLE_KEY)
+            && !roleKeys.contains(SUPERADMIN_ROLE_KEY)) {
+            return PC_CLIENT_ID;
+        }
+        return XCX_CLIENT_ID;
     }
 
     public static void assertKeepAtLeastOneRole(boolean parent, boolean teacher) {

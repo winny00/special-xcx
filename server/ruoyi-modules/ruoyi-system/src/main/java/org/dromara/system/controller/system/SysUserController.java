@@ -25,6 +25,7 @@ import org.dromara.common.redis.annotation.RepeatSubmit;
 import org.dromara.common.redis.utils.RedisUtils;
 import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.common.web.core.BaseController;
+import org.dromara.system.api.SpecialCurrentRoleService;
 import org.dromara.system.api.model.LoginUser;
 import org.dromara.system.domain.bo.SysDeptBo;
 import org.dromara.system.domain.bo.SysPostBo;
@@ -59,6 +60,7 @@ public class SysUserController extends BaseController {
     private final ISysRoleService roleService;
     private final ISysPostService postService;
     private final ISysDeptService deptService;
+    private final SpecialCurrentRoleService specialCurrentRoleService;
 
     /**
      * 分页查询用户列表。
@@ -130,6 +132,8 @@ public class SysUserController extends BaseController {
         userInfoVo.setUser(user);
         userInfoVo.setPermissions(loginUser.getMenuPermission());
         userInfoVo.setRoles(loginUser.getRolePermission());
+        userInfoVo.setCurrentRole(specialCurrentRoleService.readOrFill(loginUser.getRolePermission()));
+        userInfoVo.setPhoneBound(StringUtils.isNotBlank(user.getPhoneNumber()));
         return R.ok(userInfoVo);
     }
 

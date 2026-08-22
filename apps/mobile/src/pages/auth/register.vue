@@ -75,6 +75,24 @@ function goLogin() {
   })
 }
 
+async function submitRegister(form: { username: string, password: string, code: string, wxPhoneCode?: string }) {
+  if (submitting.value) {
+    return
+  }
+  submitting.value = true
+  try {
+    await register(form)
+    uni.showToast({ title: '注册成功', icon: 'success' })
+    uni.redirectTo({ url: LOGIN_PAGE })
+  }
+  catch (error) {
+    console.log('注册失败', error)
+  }
+  finally {
+    submitting.value = false
+  }
+}
+
 async function doRegister() {
   const phoneNumber = phone.value.trim()
   const smsCode = code.value.trim()
@@ -91,25 +109,30 @@ async function doRegister() {
     toast('请输入密码')
     return
   }
-  if (submitting.value) {
+  await submitRegister({
+    username: phoneNumber,
+    password: pwd,
+    code: smsCode,
+  })
+}
+
+function onGetPhoneNumber(e: { detail?: { errMsg?: string, code?: string } }) {
+  const detail = e?.detail
+  if (!detail || detail.errMsg !== 'getPhoneNumber:ok' || !detail.code) {
+    toast('请使用短信验证码')
     return
   }
-  submitting.value = true
-  try {
-    await register({
-      username: phoneNumber,
-      password: pwd,
-      code: smsCode,
-    })
-    uni.showToast({ title: '注册成功', icon: 'success' })
-    uni.redirectTo({ url: LOGIN_PAGE })
+  const pwd = password.value.trim()
+  if (!pwd) {
+    toast('请输入密码')
+    return
   }
-  catch (error) {
-    console.log('注册失败', error)
-  }
-  finally {
-    submitting.value = false
-  }
+  void submitRegister({
+    username: 'wxphone',
+    password: pwd,
+    code: '',
+    wxPhoneCode: detail.code,
+  })
 }
 </script>
 
@@ -171,6 +194,16 @@ async function doRegister() {
       <wd-button block type="primary" :disabled="submitting" @click="doRegister">
         注册
       </wd-button>
+      <!-- #ifdef MP-WEIXIN -->
+      <button
+        class="wx-phone-btn mt-3"
+        open-type="getPhoneNumber"
+        :disabled="submitting"
+        @getphonenumber="onGetPhoneNumber"
+      >
+        微信一键验证手机号
+      </button>
+      <!-- #endif -->
       <view
         class="mt-2 flex h-11 items-center justify-center"
         @click="goLogin"
@@ -180,3 +213,25 @@ async function doRegister() {
     </view>
   </view>
 </template>
+
+<style scoped>
+.wx-phone-btn {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: #1B7F6B;
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 44px;
+}
+.wx-phone-btn::after {
+  border: none;
+}
+.wx-phone-btn[disabled] {
+  opacity: 0.6;
+}
+</style>

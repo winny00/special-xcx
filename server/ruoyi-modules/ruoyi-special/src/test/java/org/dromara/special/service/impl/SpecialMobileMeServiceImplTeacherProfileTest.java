@@ -71,7 +71,7 @@ class SpecialMobileMeServiceImplTeacherProfileTest {
         service = new SpecialMobileMeServiceImpl(
             userService, appointmentService, appointmentMapper, socialMapper, socialService,
             roleService, userRoleMapper, clientService, permissionService, teacherMapper,
-            phone -> null);
+            phone -> null, null);
     }
 
     @Test

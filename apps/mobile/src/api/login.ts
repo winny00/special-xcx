@@ -39,6 +39,7 @@ export interface IRegisterForm {
   username: string
   password: string
   code: string
+  wxPhoneCode?: string
 }
 
 function mapLoginVo(data: IRuoYiLoginVo): IAuthLoginRes {
@@ -77,6 +78,7 @@ export function register(form: IRegisterForm) {
     password: form.password,
     code: form.code,
     clientId: RUOYI_CLIENT_ID,
+    ...(form.wxPhoneCode ? { wxPhoneCode: form.wxPhoneCode } : {}),
   })
 }
 

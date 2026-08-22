@@ -64,7 +64,7 @@ export interface IBindPhoneVo {
   client_id?: string
 }
 
-export function bindMyPhone(data: { phone: string, smsCode: string }) {
+export function bindMyPhone(data: { phone?: string, smsCode?: string, wxPhoneCode?: string }) {
   return http.post<IBindPhoneVo>('/special/mobile/me/bind-phone', data)
 }
 

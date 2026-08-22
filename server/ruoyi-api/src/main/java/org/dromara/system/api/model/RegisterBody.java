@@ -38,6 +38,11 @@ public class RegisterBody extends LoginBody {
     private String userType;
 
     /**
+     * 微信 getPhoneNumber 的 code；非空时后端换真号并跳过短信。
+     */
+    private String wxPhoneCode;
+
+    /**
      * 注册校验 {@link RegisterGroup}，不继承登录的 grantType。
      */
     @NotBlank(groups = RegisterGroup.class, message = "{auth.clientid.not.blank}")

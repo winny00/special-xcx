@@ -101,19 +101,9 @@ function goAfterBind() {
   })
 }
 
-async function doBind() {
+async function submitBind(payload: { phone?: string, smsCode?: string, wxPhoneCode?: string }) {
   if (!tokenStore.hasLogin) {
     uni.navigateTo({ url: LOGIN_PAGE })
-    return
-  }
-  const phoneNumber = phone.value.trim()
-  const smsCode = code.value.trim()
-  if (!isPhone(phoneNumber)) {
-    toast('请输入正确的手机号')
-    return
-  }
-  if (!smsCode) {
-    toast('请输入验证码')
     return
   }
   if (submitting.value) {
@@ -121,7 +111,7 @@ async function doBind() {
   }
   submitting.value = true
   try {
-    const vo = await bindMyPhone({ phone: phoneNumber, smsCode })
+    const vo = await bindMyPhone(payload)
     tokenStore.setTokenInfo({
       token: vo.access_token || '',
       expiresIn: Number(vo.expire_in) || 7200,
@@ -137,6 +127,29 @@ async function doBind() {
   finally {
     submitting.value = false
   }
+}
+
+async function doBind() {
+  const phoneNumber = phone.value.trim()
+  const smsCode = code.value.trim()
+  if (!isPhone(phoneNumber)) {
+    toast('请输入正确的手机号')
+    return
+  }
+  if (!smsCode) {
+    toast('请输入验证码')
+    return
+  }
+  await submitBind({ phone: phoneNumber, smsCode })
+}
+
+function onGetPhoneNumber(e: { detail?: { errMsg?: string, code?: string } }) {
+  const detail = e?.detail
+  if (!detail || detail.errMsg !== 'getPhoneNumber:ok' || !detail.code) {
+    toast('请使用短信验证码')
+    return
+  }
+  void submitBind({ wxPhoneCode: detail.code })
 }
 </script>
 
@@ -188,6 +201,38 @@ async function doBind() {
       <wd-button block type="primary" :disabled="submitting" @click="doBind">
         绑定
       </wd-button>
+      <!-- #ifdef MP-WEIXIN -->
+      <button
+        class="wx-phone-btn mt-3"
+        open-type="getPhoneNumber"
+        :disabled="submitting"
+        @getphonenumber="onGetPhoneNumber"
+      >
+        微信一键验证手机号
+      </button>
+      <!-- #endif -->
     </view>
   </view>
 </template>
+
+<style scoped>
+.wx-phone-btn {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: #1B7F6B;
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 44px;
+}
+.wx-phone-btn::after {
+  border: none;
+}
+.wx-phone-btn[disabled] {
+  opacity: 0.6;
+}
+</style>

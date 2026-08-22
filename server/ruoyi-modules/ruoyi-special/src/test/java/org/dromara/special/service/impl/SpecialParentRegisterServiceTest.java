@@ -60,7 +60,7 @@ class SpecialParentRegisterServiceTest {
     @BeforeEach
     void setUp() {
         Function<String, String> smsCodes = phone -> SMS_CODE;
-        service = new SpecialParentRegisterService(userMapper, userService, roleService, userRoleMapper, smsCodes);
+        service = new SpecialParentRegisterService(userMapper, userService, roleService, userRoleMapper, smsCodes, null);
         body = new RegisterBody();
         body.setUsername(PHONE);
         body.setPassword("pass123");
@@ -71,7 +71,7 @@ class SpecialParentRegisterServiceTest {
     @Test
     void productionConstructorIsAutowiredForSpring() {
         Constructor<?> production = Arrays.stream(SpecialParentRegisterService.class.getDeclaredConstructors())
-            .filter(ctor -> ctor.getParameterCount() == 4)
+            .filter(ctor -> ctor.getParameterCount() == 5)
             .findFirst()
             .orElseThrow();
         assertTrue(production.isAnnotationPresent(Autowired.class));
@@ -104,6 +104,31 @@ class SpecialParentRegisterServiceTest {
         body.setCode("0000");
         ServiceException ex = assertThrows(ServiceException.class, () -> service.register(body));
         assertEquals("验证码无效", ex.getMessage());
+    }
+
+    @Test
+    void wxPhoneCodeSkipsSmsAndRegistersResolvedPhone() {
+        service = new SpecialParentRegisterService(
+            userMapper, userService, roleService, userRoleMapper,
+            phone -> {
+                throw new AssertionError("SMS must be skipped when wxPhoneCode is present");
+            },
+            code -> {
+                assertEquals("wx-phone-code", code);
+                return PHONE;
+            });
+        body.setUsername("wxphone");
+        body.setCode("0000");
+        body.setWxPhoneCode("wx-phone-code");
+        when(userService.selectUserByPhoneNumber(PHONE)).thenReturn(null);
+        when(roleService.selectRoleAll()).thenReturn(List.of(role("special_parent", 7L)));
+
+        service.register(body);
+
+        ArgumentCaptor<SysUserBo> captor = ArgumentCaptor.forClass(SysUserBo.class);
+        verify(userService).insertUser(captor.capture());
+        assertEquals(PHONE, captor.getValue().getUserName());
+        assertEquals(PHONE, captor.getValue().getPhoneNumber());
     }
 
     @Test

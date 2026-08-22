@@ -30,6 +30,7 @@ import org.dromara.special.mapper.SpecialAppointmentMapper;
 import org.dromara.special.mapper.SpecialTeacherMapper;
 import org.dromara.special.service.ISpecialAppointmentService;
 import org.dromara.special.service.ISpecialMobileMeService;
+import org.dromara.special.service.SpecialWxPhoneLookup;
 import org.dromara.special.util.SpecialBindPhonePlanner;
 import org.dromara.special.util.SpecialCurrentRoleStore;
 import org.dromara.special.util.SpecialIdentitySupport;
@@ -83,6 +84,7 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
     private final ISysPermissionService permissionService;
     private final SpecialTeacherMapper teacherMapper;
     private final Function<String, String> smsCodeLookup;
+    private final SpecialWxPhoneLookup wxPhoneLookup;
 
     @Autowired
     public SpecialMobileMeServiceImpl(
@@ -95,11 +97,12 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         SysUserRoleMapper userRoleMapper,
         ISysClientService clientService,
         ISysPermissionService permissionService,
-        SpecialTeacherMapper teacherMapper
+        SpecialTeacherMapper teacherMapper,
+        @Autowired(required = false) SpecialWxPhoneLookup wxPhoneLookup
     ) {
         this(userService, appointmentService, appointmentMapper, socialMapper, socialService,
             roleService, userRoleMapper, clientService, permissionService, teacherMapper,
-            SpecialMobileMeServiceImpl::readAndConsumeSmsCode);
+            SpecialMobileMeServiceImpl::readAndConsumeSmsCode, wxPhoneLookup);
     }
 
     SpecialMobileMeServiceImpl(
@@ -113,7 +116,8 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         ISysClientService clientService,
         ISysPermissionService permissionService,
         SpecialTeacherMapper teacherMapper,
-        Function<String, String> smsCodeLookup
+        Function<String, String> smsCodeLookup,
+        SpecialWxPhoneLookup wxPhoneLookup
     ) {
         this.userService = userService;
         this.appointmentService = appointmentService;
@@ -126,6 +130,7 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         this.permissionService = permissionService;
         this.teacherMapper = teacherMapper;
         this.smsCodeLookup = Objects.requireNonNull(smsCodeLookup);
+        this.wxPhoneLookup = wxPhoneLookup;
     }
 
     @Override
@@ -243,6 +248,22 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         if (currentUserId == null) {
             throw new ServiceException("用户不存在");
         }
+        String phone = resolveBindPhone(body);
+        return DataPermissionHelper.ignore(() -> doBindPhone(currentUserId, phone));
+    }
+
+    private String resolveBindPhone(BindPhoneBody body) {
+        String wxPhoneCode = body == null ? null : StringUtils.trim(body.getWxPhoneCode());
+        if (StringUtils.isNotBlank(wxPhoneCode)) {
+            if (wxPhoneLookup == null) {
+                throw new ServiceException("微信手机号未配置");
+            }
+            String phone = wxPhoneLookup.resolvePhone(wxPhoneCode);
+            if (!SpecialIdentitySupport.isPhoneLogin(phone)) {
+                throw new ServiceException("请输入正确的手机号");
+            }
+            return phone;
+        }
         String phone = body == null ? null : body.getPhone();
         if (!SpecialIdentitySupport.isPhoneLogin(phone)) {
             throw new ServiceException("请输入正确的手机号");
@@ -251,7 +272,7 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         if (!SpecialIdentitySupport.smsCodeMatches(expected, body.getSmsCode())) {
             throw new ServiceException("验证码无效");
         }
-        return DataPermissionHelper.ignore(() -> doBindPhone(currentUserId, phone));
+        return phone;
     }
 
     private SpecialBindPhoneVo doBindPhone(Long currentUserId, String phone) {

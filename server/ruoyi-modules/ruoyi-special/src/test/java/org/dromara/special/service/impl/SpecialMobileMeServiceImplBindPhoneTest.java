@@ -100,7 +100,7 @@ class SpecialMobileMeServiceImplBindPhoneTest {
         Function<String, String> smsCodes = phone -> SMS_CODE;
         service = new SpecialMobileMeServiceImpl(
             userService, appointmentService, appointmentMapper, socialMapper, socialService,
-            roleService, userRoleMapper, clientService, permissionService, teacherMapper, smsCodes);
+            roleService, userRoleMapper, clientService, permissionService, teacherMapper, smsCodes, null);
         body = new BindPhoneBody();
         body.setPhone(PHONE);
         body.setSmsCode(SMS_CODE);
@@ -109,7 +109,7 @@ class SpecialMobileMeServiceImplBindPhoneTest {
     @Test
     void productionConstructorIsAutowiredForSpring() {
         Constructor<?> production = Arrays.stream(SpecialMobileMeServiceImpl.class.getDeclaredConstructors())
-            .filter(ctor -> ctor.getParameterCount() == 10)
+            .filter(ctor -> ctor.getParameterCount() == 11)
             .findFirst()
             .orElseThrow();
         assertTrue(production.isAnnotationPresent(Autowired.class));
@@ -133,6 +133,43 @@ class SpecialMobileMeServiceImplBindPhoneTest {
             ServiceException ex = assertThrows(ServiceException.class, () -> service.bindPhone(body));
             assertEquals("验证码无效", ex.getMessage());
         }
+    }
+
+    @Test
+    void wxPhoneCodeSkipsSmsAndUsesResolvedPhone() {
+        service = new SpecialMobileMeServiceImpl(
+            userService, appointmentService, appointmentMapper, socialMapper, socialService,
+            roleService, userRoleMapper, clientService, permissionService, teacherMapper,
+            phone -> {
+                throw new AssertionError("SMS must be skipped when wxPhoneCode is present");
+            },
+            code -> {
+                assertEquals("wx-phone-code", code);
+                return PHONE;
+            });
+        body.setPhone(null);
+        body.setSmsCode("0000");
+        body.setWxPhoneCode("wx-phone-code");
+        when(userService.selectUserById(CURRENT_USER_ID)).thenReturn(currentUser(null));
+        when(userService.selectUserByPhoneNumber(PHONE)).thenReturn(null);
+        when(socialService.queryListByUserId(CURRENT_USER_ID)).thenReturn(List.of());
+        when(roleService.selectRolesByUserId(CURRENT_USER_ID)).thenReturn(List.of());
+        when(roleService.selectRoleAll()).thenReturn(List.of(parentRole()));
+        when(userService.updateUserProfile(any())).thenReturn(1);
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            helper.when(LoginHelper::getUserId).thenReturn(CURRENT_USER_ID);
+            stp.when(StpUtil::getTokenValue).thenReturn(TOKEN);
+            stp.when(StpUtil::getTokenTimeout).thenReturn(7200L);
+            stp.when(() -> StpUtil.getExtra(LoginHelper.CLIENT_KEY)).thenReturn(SpecialIdentitySupport.XCX_CLIENT_ID);
+
+            SpecialBindPhoneVo vo = service.bindPhone(body);
+            assertEquals(TOKEN, vo.getAccessToken());
+        }
+        ArgumentCaptor<SysUserBo> captor = ArgumentCaptor.forClass(SysUserBo.class);
+        verify(userService).updateUserProfile(captor.capture());
+        assertEquals(PHONE, captor.getValue().getPhoneNumber());
     }
 
     @Test

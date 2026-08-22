@@ -6,7 +6,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 移动端绑手机请求。本任务只处理 phone + smsCode；wxPhoneCode 留给 Task 11。
+ * 移动端绑手机请求。wxPhoneCode 非空时走微信真号并跳过短信。
  */
 @Data
 public class BindPhoneBody implements Serializable {
@@ -19,7 +19,7 @@ public class BindPhoneBody implements Serializable {
     private String smsCode;
 
     /**
-     * 微信 getPhoneNumber 的 code，本任务不使用。
+     * 微信 getPhoneNumber 的 code。
      */
     private String wxPhoneCode;
 

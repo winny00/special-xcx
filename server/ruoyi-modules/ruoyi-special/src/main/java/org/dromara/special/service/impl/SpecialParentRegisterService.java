@@ -8,6 +8,7 @@ import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.mybatis.helper.DataPermissionHelper;
 import org.dromara.common.redis.utils.RedisUtils;
+import org.dromara.special.service.SpecialWxPhoneLookup;
 import org.dromara.special.util.SpecialIdentitySupport;
 import org.dromara.special.util.SpecialParentSupport;
 import org.dromara.system.api.model.RegisterBody;
@@ -37,15 +38,18 @@ public class SpecialParentRegisterService {
     private final ISysRoleService roleService;
     private final SysUserRoleMapper userRoleMapper;
     private final Function<String, String> smsCodeLookup;
+    private final SpecialWxPhoneLookup wxPhoneLookup;
 
     @Autowired
     public SpecialParentRegisterService(
         SysUserMapper userMapper,
         ISysUserService userService,
         ISysRoleService roleService,
-        SysUserRoleMapper userRoleMapper
+        SysUserRoleMapper userRoleMapper,
+        @Autowired(required = false) SpecialWxPhoneLookup wxPhoneLookup
     ) {
-        this(userMapper, userService, roleService, userRoleMapper, SpecialParentRegisterService::readAndConsumeSmsCode);
+        this(userMapper, userService, roleService, userRoleMapper,
+            SpecialParentRegisterService::readAndConsumeSmsCode, wxPhoneLookup);
     }
 
     SpecialParentRegisterService(
@@ -53,13 +57,15 @@ public class SpecialParentRegisterService {
         ISysUserService userService,
         ISysRoleService roleService,
         SysUserRoleMapper userRoleMapper,
-        Function<String, String> smsCodeLookup
+        Function<String, String> smsCodeLookup,
+        SpecialWxPhoneLookup wxPhoneLookup
     ) {
         this.userMapper = Objects.requireNonNull(userMapper);
         this.userService = userService;
         this.roleService = roleService;
         this.userRoleMapper = userRoleMapper;
         this.smsCodeLookup = smsCodeLookup;
+        this.wxPhoneLookup = wxPhoneLookup;
     }
 
     /**
@@ -69,7 +75,23 @@ public class SpecialParentRegisterService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void register(RegisterBody body) {
-        String phone = body.getUsername();
+        String phone = resolveRegisterPhone(body);
+        DataPermissionHelper.ignore(() -> doRegister(body, phone));
+    }
+
+    private String resolveRegisterPhone(RegisterBody body) {
+        String wxPhoneCode = body == null ? null : StringUtils.trim(body.getWxPhoneCode());
+        if (StringUtils.isNotBlank(wxPhoneCode)) {
+            if (wxPhoneLookup == null) {
+                throw new ServiceException("微信手机号未配置");
+            }
+            String phone = wxPhoneLookup.resolvePhone(wxPhoneCode);
+            if (!SpecialIdentitySupport.isPhoneLogin(phone)) {
+                throw new ServiceException("请输入正确的手机号");
+            }
+            return phone;
+        }
+        String phone = body == null ? null : body.getUsername();
         if (!SpecialIdentitySupport.isPhoneLogin(phone)) {
             throw new ServiceException("请输入正确的手机号");
         }
@@ -77,7 +99,7 @@ public class SpecialParentRegisterService {
         if (!SpecialIdentitySupport.smsCodeMatches(expected, body.getCode())) {
             throw new ServiceException("验证码无效");
         }
-        DataPermissionHelper.ignore(() -> doRegister(body, phone));
+        return phone;
     }
 
     private void doRegister(RegisterBody body, String phone) {

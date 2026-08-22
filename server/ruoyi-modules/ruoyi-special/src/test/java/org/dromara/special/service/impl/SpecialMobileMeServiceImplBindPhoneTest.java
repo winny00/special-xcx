@@ -4,6 +4,7 @@ import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
 import org.dromara.common.core.constant.SystemConstants;
 import org.dromara.common.core.exception.ServiceException;
+import org.dromara.common.core.exception.user.UserException;
 import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.special.domain.SpecialAppointment;
 import org.dromara.special.domain.bo.BindPhoneBody;
@@ -11,6 +12,7 @@ import org.dromara.special.domain.vo.SpecialBindPhoneVo;
 import org.dromara.special.mapper.SpecialAppointmentMapper;
 import org.dromara.special.service.ISpecialAppointmentService;
 import org.dromara.special.util.SpecialIdentitySupport;
+import org.dromara.system.api.model.XcxLoginUser;
 import org.dromara.system.domain.SysSocial;
 import org.dromara.system.domain.SysUserRole;
 import org.dromara.system.domain.bo.SysUserBo;
@@ -35,8 +37,11 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -47,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -145,6 +151,82 @@ class SpecialMobileMeServiceImplBindPhoneTest {
     }
 
     @Test
+    void rejectsWhenSessionOpenidIsBoundToAnotherAccountWithoutLocalSocial() {
+        when(userService.selectUserById(CURRENT_USER_ID)).thenReturn(currentUser(null));
+        when(userService.selectUserByPhoneNumber(PHONE)).thenReturn(phoneOwner());
+        SysSocialVo otherBinding = new SysSocialVo();
+        otherBinding.setUserId(9999L);
+        otherBinding.setOpenId("oid-session");
+        otherBinding.setSource("WECHAT_MINI_PROGRAM");
+        otherBinding.setAuthId("WECHAT_MINI_PROGRAMoid-session");
+        when(socialService.selectByAuthId("WECHAT_MINI_PROGRAMoid-session")).thenReturn(List.of(otherBinding));
+
+        XcxLoginUser sessionUser = new XcxLoginUser();
+        sessionUser.setUserId(CURRENT_USER_ID);
+        sessionUser.setOpenid("oid-session");
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+            helper.when(LoginHelper::getUserId).thenReturn(CURRENT_USER_ID);
+            helper.when(LoginHelper::getLoginUser).thenReturn(sessionUser);
+            ServiceException ex = assertThrows(ServiceException.class, () -> service.bindPhone(body));
+            assertEquals("该微信已绑定其他账号", ex.getMessage());
+        }
+        verify(userService, never()).updateUserStatus(any(), any());
+        verify(socialMapper, never()).updateById(any(SysSocial.class));
+    }
+
+    @Test
+    void ignoresNonWechatSocialWhenDetectingOpenidConflict() {
+        when(userService.selectUserById(CURRENT_USER_ID)).thenReturn(currentUser(null));
+        when(userService.selectUserByPhoneNumber(PHONE)).thenReturn(null);
+        SysSocialVo gitee = new SysSocialVo();
+        gitee.setId(8L);
+        gitee.setUserId(CURRENT_USER_ID);
+        gitee.setOpenId("gitee-id");
+        gitee.setSource("GITEE");
+        gitee.setAuthId("GITEEgitee-id");
+        when(socialService.queryListByUserId(CURRENT_USER_ID)).thenReturn(List.of(gitee));
+        SysSocialVo otherBinding = new SysSocialVo();
+        otherBinding.setUserId(9999L);
+        otherBinding.setAuthId("GITEEgitee-id");
+        lenient().when(socialService.selectByAuthId("GITEEgitee-id")).thenReturn(List.of(otherBinding));
+        when(roleService.selectRolesByUserId(CURRENT_USER_ID)).thenReturn(List.of());
+        when(roleService.selectRoleAll()).thenReturn(List.of(parentRole()));
+        when(userService.updateUserProfile(any())).thenReturn(1);
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            helper.when(LoginHelper::getUserId).thenReturn(CURRENT_USER_ID);
+            stp.when(StpUtil::getTokenValue).thenReturn(TOKEN);
+            stp.when(StpUtil::getTokenTimeout).thenReturn(7200L);
+            stp.when(() -> StpUtil.getExtra(LoginHelper.CLIENT_KEY)).thenReturn(SpecialIdentitySupport.XCX_CLIENT_ID);
+
+            SpecialBindPhoneVo vo = service.bindPhone(body);
+            assertEquals(TOKEN, vo.getAccessToken());
+        }
+        verify(socialService, never()).selectByAuthId("GITEEgitee-id");
+        verify(userService).updateUserProfile(any());
+    }
+
+    @Test
+    void rejectsDisabledPhoneOwnerBeforeMerge() {
+        SysUserVo disabledOwner = phoneOwner();
+        disabledOwner.setStatus(SystemConstants.DISABLE);
+        when(userService.selectUserById(CURRENT_USER_ID)).thenReturn(currentUser(null));
+        when(userService.selectUserByPhoneNumber(PHONE)).thenReturn(disabledOwner);
+        when(socialService.queryListByUserId(CURRENT_USER_ID)).thenReturn(List.of(currentSocial()));
+        when(socialService.selectByAuthId("WECHAT_MINI_PROGRAMoid-current")).thenReturn(List.of(currentSocial()));
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+            helper.when(LoginHelper::getUserId).thenReturn(CURRENT_USER_ID);
+            UserException ex = assertThrows(UserException.class, () -> service.bindPhone(body));
+            assertEquals("user.blocked", ex.getCode());
+        }
+        verify(userService, never()).updateUserStatus(any(), any());
+        verify(socialMapper, never()).updateById(any(SysSocial.class));
+        verify(appointmentMapper, never()).updateById(any(SpecialAppointment.class));
+    }
+
+    @Test
     void writesPhoneWhenNumberHasNoOwner() {
         when(userService.selectUserById(CURRENT_USER_ID)).thenReturn(currentUser(null));
         when(userService.selectUserByPhoneNumber(PHONE)).thenReturn(null);
@@ -215,6 +297,53 @@ class SpecialMobileMeServiceImplBindPhoneTest {
             PHONE_OWNER_ID.equals(ur.getUserId()) && Long.valueOf(7L).equals(ur.getRoleId())));
         verify(userService).updateUserStatus(CURRENT_USER_ID, SystemConstants.DISABLE);
         verify(userService, never()).updateUserStatus(PHONE_OWNER_ID, SystemConstants.DISABLE);
+    }
+
+    @Test
+    void defersKeepTokenUntilAfterCommitWhenTransactionActive() {
+        when(userService.selectUserById(CURRENT_USER_ID)).thenReturn(currentUser(null));
+        when(userService.selectUserByPhoneNumber(PHONE)).thenReturn(phoneOwner());
+        when(socialService.queryListByUserId(CURRENT_USER_ID)).thenReturn(List.of(currentSocial()));
+        when(socialService.selectByAuthId("WECHAT_MINI_PROGRAMoid-current")).thenReturn(List.of(currentSocial()));
+        when(roleService.selectRolesByUserId(PHONE_OWNER_ID)).thenReturn(List.of());
+        when(roleService.selectRoleAll()).thenReturn(List.of(parentRole()));
+        when(userService.selectUserById(PHONE_OWNER_ID)).thenReturn(phoneOwner());
+        when(permissionService.getMenuPermission(PHONE_OWNER_ID)).thenReturn(java.util.Set.of());
+        when(permissionService.getRolePermission(PHONE_OWNER_ID)).thenReturn(java.util.Set.of("special_parent"));
+        when(clientService.queryByClientId(SpecialIdentitySupport.XCX_CLIENT_ID)).thenReturn(xcxClient());
+        when(appointmentMapper.selectList(any())).thenReturn(List.of());
+        SaSession session = mock(SaSession.class);
+        TransactionSynchronizationManager.initSynchronization();
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            helper.when(LoginHelper::getUserId).thenReturn(CURRENT_USER_ID);
+            helper.when(LoginHelper::getLoginUser).thenReturn(null);
+            stp.when(StpUtil::getTokenValue).thenReturn(TOKEN);
+            stp.when(StpUtil::getTokenTimeout).thenReturn(3600L);
+            stp.when(() -> StpUtil.getExtra(LoginHelper.CLIENT_KEY)).thenReturn(SpecialIdentitySupport.XCX_CLIENT_ID);
+            stp.when(StpUtil::getTokenSession).thenReturn(session);
+
+            SpecialBindPhoneVo vo = service.bindPhone(body);
+
+            verify(userService).updateUserStatus(CURRENT_USER_ID, SystemConstants.DISABLE);
+            stp.verify(StpUtil::logout, never());
+            helper.verify(() -> LoginHelper.login(any(), any()), never());
+
+            List<TransactionSynchronization> syncs =
+                new ArrayList<>(TransactionSynchronizationManager.getSynchronizations());
+            assertEquals(1, syncs.size());
+            for (TransactionSynchronization sync : syncs) {
+                sync.afterCommit();
+            }
+            stp.verify(StpUtil::logout);
+            assertEquals(TOKEN, vo.getAccessToken());
+            assertEquals(3600L, vo.getExpireIn());
+            assertEquals(SpecialIdentitySupport.XCX_CLIENT_ID, vo.getClientId());
+        } finally {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.clearSynchronization();
+            }
+        }
     }
 
     private static SysUserVo currentUser(String phone) {

@@ -9,6 +9,7 @@ import org.dromara.common.core.constant.GlobalConstants;
 import org.dromara.common.core.constant.SystemConstants;
 import org.dromara.common.core.domain.PageResult;
 import org.dromara.common.core.exception.ServiceException;
+import org.dromara.common.core.exception.user.UserException;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.helper.DataPermissionHelper;
@@ -48,6 +49,8 @@ import org.dromara.system.service.ISysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.Objects;
@@ -218,6 +221,9 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
             ensureParent(currentUserId);
             return currentToken();
         }
+        if (SystemConstants.DISABLE.equals(phoneOwner.getStatus())) {
+            throw new UserException("user.blocked", phoneOwner.getUserName());
+        }
         mergeToKeep(plan.keepUserId(), plan.disableUserId());
         return issueKeepToken(plan.keepUserId());
     }
@@ -275,25 +281,43 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
     }
 
     private boolean isOpenidBoundToOther(Long currentUserId) {
+        String sessionOpenid = sessionWechatOpenid();
+        if (StringUtils.isNotBlank(sessionOpenid) && wechatOpenidBoundToOther(sessionOpenid, currentUserId)) {
+            return true;
+        }
         List<SysSocialVo> mine = socialService.queryListByUserId(currentUserId);
         if (mine == null || mine.isEmpty()) {
             return false;
         }
         for (SysSocialVo social : mine) {
-            if (social == null || StringUtils.isBlank(social.getOpenId())) {
+            if (social == null
+                || !WECHAT_MINI_SOURCE.equals(social.getSource())
+                || StringUtils.isBlank(social.getOpenId())) {
                 continue;
             }
-            String authId = StringUtils.isNotBlank(social.getAuthId())
-                ? social.getAuthId()
-                : WECHAT_MINI_SOURCE + social.getOpenId();
-            List<SysSocialVo> bindings = socialService.selectByAuthId(authId);
-            if (bindings == null) {
-                continue;
+            if (wechatOpenidBoundToOther(social.getOpenId(), currentUserId)) {
+                return true;
             }
-            for (SysSocialVo binding : bindings) {
-                if (binding.getUserId() != null && !currentUserId.equals(binding.getUserId())) {
-                    return true;
-                }
+        }
+        return false;
+    }
+
+    private String sessionWechatOpenid() {
+        LoginUser loginUser = LoginHelper.getLoginUser();
+        if (loginUser instanceof XcxLoginUser xcx && StringUtils.isNotBlank(xcx.getOpenid())) {
+            return xcx.getOpenid();
+        }
+        return null;
+    }
+
+    private boolean wechatOpenidBoundToOther(String openid, Long currentUserId) {
+        List<SysSocialVo> bindings = socialService.selectByAuthId(WECHAT_MINI_SOURCE + openid);
+        if (bindings == null) {
+            return false;
+        }
+        for (SysSocialVo binding : bindings) {
+            if (binding != null && binding.getUserId() != null && !currentUserId.equals(binding.getUserId())) {
+                return true;
             }
         }
         return false;
@@ -314,12 +338,34 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         if (keep == null) {
             throw new ServiceException("用户不存在");
         }
+        if (SystemConstants.DISABLE.equals(keep.getStatus())) {
+            throw new UserException("user.blocked", keep.getUserName());
+        }
         LoginUser loginUser = buildKeepLoginUser(keep, client, movedOpenid(keepUserId));
-        StpUtil.logout();
-        LoginHelper.login(loginUser, loginParameter(client, clientId));
-        SpecialCurrentRoleStore.write(
-            SpecialCurrentRoleStore.requireRoleForLogin(clientId, loginUser.getRolePermission()));
-        return currentToken();
+        SpecialBindPhoneVo vo = new SpecialBindPhoneVo();
+        runAfterCommit(() -> {
+            StpUtil.logout();
+            LoginHelper.login(loginUser, loginParameter(client, clientId));
+            SpecialCurrentRoleStore.write(
+                SpecialCurrentRoleStore.requireRoleForLogin(clientId, loginUser.getRolePermission()));
+            vo.setAccessToken(StpUtil.getTokenValue());
+            vo.setExpireIn(StpUtil.getTokenTimeout());
+            vo.setClientId(clientId);
+        });
+        return vo;
+    }
+
+    private void runAfterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+            return;
+        }
+        action.run();
     }
 
     private LoginUser buildKeepLoginUser(SysUserVo user, SysClientVo client, String openid) {

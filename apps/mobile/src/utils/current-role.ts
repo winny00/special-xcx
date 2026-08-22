@@ -31,3 +31,12 @@ export function resolveRole(cached: string, owned: string[]): SpecialRoleKey | '
   }
   return ''
 }
+
+export function syncCachedRole(owned: string[]): void {
+  const role = resolveRole(readCachedRole(), owned)
+  if (role) {
+    writeCachedRole(role)
+    return
+  }
+  clearCurrentRole()
+}

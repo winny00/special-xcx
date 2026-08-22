@@ -4,6 +4,7 @@ import {
   clearCurrentRole,
   readCachedRole,
   resolveRole,
+  syncCachedRole,
   writeCachedRole,
 } from './current-role'
 
@@ -54,5 +55,18 @@ describe('cached role storage', () => {
   it('clears the stored role', () => {
     clearCurrentRole()
     expect(uni.removeStorageSync).toHaveBeenCalledWith(CURRENT_ROLE_STORAGE_KEY)
+  })
+
+  it('clears stale cache when resolved role is empty', () => {
+    vi.mocked(uni.getStorageSync).mockReturnValue('special_teacher')
+    syncCachedRole(['admin'])
+    expect(uni.removeStorageSync).toHaveBeenCalledWith(CURRENT_ROLE_STORAGE_KEY)
+    expect(uni.setStorageSync).not.toHaveBeenCalled()
+  })
+
+  it('writes the resolved role after login sync', () => {
+    vi.mocked(uni.getStorageSync).mockReturnValue('special_teacher')
+    syncCachedRole(['special_parent'])
+    expect(uni.setStorageSync).toHaveBeenCalledWith(CURRENT_ROLE_STORAGE_KEY, 'special_parent')
   })
 })

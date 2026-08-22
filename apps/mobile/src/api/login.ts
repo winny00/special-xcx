@@ -25,7 +25,7 @@ interface IRuoYiLoginVo {
 /** RuoYi 用户信息响应 */
 interface IRuoYiUserInfoVo {
   user: {
-    userId: number
+    userId: string | number
     userName: string
     nickName: string
     avatar?: string
@@ -107,7 +107,7 @@ export function refreshToken(refreshToken: string) {
 export function getUserInfo() {
   return http.get<IRuoYiUserInfoVo>('/system/user/getInfo').then((res) => {
     const info: IUserInfoRes = {
-      userId: res.user.userId,
+      userId: String(res.user.userId),
       username: res.user.userName,
       nickname: res.user.nickName,
       avatar: res.user.avatar,

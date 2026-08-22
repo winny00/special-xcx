@@ -12,7 +12,7 @@ import {
   getWxCode,
 } from '@/api/login'
 import { isDoubleTokenRes, isSingleTokenRes } from '@/api/types/login'
-import { clearCurrentRole, readCachedRole, resolveRole, writeCachedRole } from '@/utils/current-role'
+import { clearCurrentRole, syncCachedRole } from '@/utils/current-role'
 import { useUserStore } from './user'
 
 /**
@@ -111,10 +111,7 @@ export const useTokenStore = defineStore(
       setTokenInfo(tokenInfo)
       const userStore = useUserStore()
       const info = await userStore.fetchUserInfo()
-      const role = resolveRole(readCachedRole(), info.roles ?? [])
-      if (role) {
-        writeCachedRole(role)
-      }
+      syncCachedRole(info.roles ?? [])
     }
 
     /**

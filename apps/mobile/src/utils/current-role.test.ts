@@ -3,6 +3,7 @@ import {
   CURRENT_ROLE_STORAGE_KEY,
   canSwitchIdentity,
   clearCurrentRole,
+  isPhoneBound,
   isTeacherRole,
   planColdStartRole,
   readCachedRole,
@@ -131,5 +132,17 @@ describe('planColdStartRole', () => {
       role: '',
       shouldPut: false,
     })
+  })
+})
+
+describe('isPhoneBound', () => {
+  it('allows navigation only when phoneBound is strictly true', () => {
+    expect(isPhoneBound(true)).toBe(true)
+  })
+
+  it('treats missing and false phoneBound as unbound', () => {
+    expect(isPhoneBound(false)).toBe(false)
+    expect(isPhoneBound(undefined)).toBe(false)
+    expect(isPhoneBound(null)).toBe(false)
   })
 })

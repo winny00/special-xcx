@@ -4,6 +4,7 @@ import { getMyTeacherProfile, updateMyTeacherProfile } from '@/api/me'
 import { BIND_PHONE_PAGE, LOGIN_PAGE } from '@/router/config'
 import { useUserStore } from '@/store'
 import { useTokenStore } from '@/store/token'
+import { isPhoneBound } from '@/utils/current-role'
 
 definePage({
   style: {
@@ -38,7 +39,7 @@ async function loadProfile() {
     uni.navigateTo({ url: LOGIN_PAGE })
     return
   }
-  if (userStore.userInfo.phoneBound === false) {
+  if (!isPhoneBound(userStore.userInfo.phoneBound)) {
     loading.value = false
     uni.redirectTo({
       url: `${BIND_PHONE_PAGE}?redirect=${encodeURIComponent('/pages/me/teacher-profile')}`,

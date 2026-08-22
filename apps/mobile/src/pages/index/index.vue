@@ -8,7 +8,7 @@ import { useCapsuleNav } from '@/hooks/useCapsuleNav'
 import { APPOINTMENTS_PAGE, BIND_PHONE_PAGE, LOGIN_PAGE } from '@/router/config'
 import { useUserStore } from '@/store'
 import { useTokenStore } from '@/store/token'
-import { isTeacherRole, readCachedRole } from '@/utils/current-role'
+import { isPhoneBound, isTeacherRole, readCachedRole } from '@/utils/current-role'
 import { openResourceList } from '@/utils/resource-nav'
 
 definePage({
@@ -155,7 +155,7 @@ function goTeacherAppointments() {
     uni.navigateTo({ url: LOGIN_PAGE })
     return
   }
-  if (userStore.userInfo.phoneBound === false) {
+  if (!isPhoneBound(userStore.userInfo.phoneBound)) {
     uni.navigateTo({
       url: `${BIND_PHONE_PAGE}?redirect=${encodeURIComponent(APPOINTMENTS_PAGE)}`,
     })

@@ -64,3 +64,7 @@ export function planColdStartRole(
     shouldPut: Boolean(role) && role !== serverCurrentRole,
   }
 }
+
+export function isPhoneBound(value: unknown): boolean {
+  return value === true
+}

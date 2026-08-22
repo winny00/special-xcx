@@ -6,7 +6,7 @@ import { storeToRefs } from 'pinia'
 import { APPOINTMENTS_PAGE, BIND_PHONE_PAGE, LOGIN_PAGE, TEACHER_PROFILE_PAGE } from '@/router/config'
 import { useUserStore } from '@/store'
 import { useTokenStore } from '@/store/token'
-import { canSwitchIdentity, isTeacherRole, readCachedRole, roleTagLabel, writeCachedRole } from '@/utils/current-role'
+import { canSwitchIdentity, isPhoneBound, isTeacherRole, readCachedRole, roleTagLabel, writeCachedRole } from '@/utils/current-role'
 import type { SpecialRoleKey } from '@/utils/current-role'
 
 definePage({
@@ -50,7 +50,7 @@ const showSwitch = computed(() => tokenStore.hasLogin && canSwitchIdentity(owned
 
 const isTeacher = computed(() => tokenStore.hasLogin && isTeacherRole(profile.value?.currentRole || currentRole.value))
 
-const phoneBound = computed(() => profile.value?.phoneBound ?? userInfo.value.phoneBound ?? false)
+const phoneBound = computed(() => isPhoneBound(profile.value?.phoneBound ?? userInfo.value.phoneBound))
 
 async function loadProfile() {
   if (!tokenStore.hasLogin) {

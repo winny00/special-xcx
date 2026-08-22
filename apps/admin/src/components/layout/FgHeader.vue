@@ -43,6 +43,7 @@ function onLogout() {
         type="button"
         class="fg-header__refresh"
         aria-label="刷新当前页"
+        title="刷新当前页"
         @click="emit('refresh')"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -91,14 +92,14 @@ function onLogout() {
   justify-content: center;
   width: 44px;
   height: 44px;
+  margin-left: 8px;
   padding: 0;
-  border: none;
+  border: 1px solid var(--fg-border);
   border-radius: var(--fg-radius-sm);
-  background: transparent;
-  color: var(--fg-muted);
+  background: var(--fg-surface);
+  color: var(--fg-primary);
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 180ms ease, background-color 180ms ease, color 180ms ease;
+  transition: background-color 180ms ease, border-color 180ms ease;
 }
 
 .fg-header__refresh svg {
@@ -106,20 +107,10 @@ function onLogout() {
   height: 18px;
 }
 
-.fg-header__center:hover .fg-header__refresh,
+.fg-header__refresh:hover,
 .fg-header__refresh:focus-visible {
-  opacity: 1;
-}
-
-.fg-header__refresh:hover {
-  color: var(--fg-primary);
   background: var(--fg-primary-soft);
-}
-
-@media (pointer: coarse) {
-  .fg-header__refresh {
-    opacity: 1;
-  }
+  border-color: var(--el-color-primary-light-7);
 }
 
 @media (prefers-reduced-motion: reduce) {

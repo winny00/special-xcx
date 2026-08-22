@@ -75,11 +75,12 @@ public final class SpecialCurrentRoleStore {
 
     /**
      * 读会话 currentRole；为空则按 {@link #resolveForGetInfo} 填回会话。
+     * 解析结果为 null 时不写会话（Sa-Token ConcurrentHashMap 拒绝 null）。
      */
     public static String readOrFill(Set<String> roleKeys) {
         String current = read();
         String resolved = resolveForGetInfo(current, roleKeys);
-        if (current == null || current.isBlank()) {
+        if (resolved != null && (current == null || current.isBlank())) {
             write(resolved);
         }
         return resolved;

@@ -122,7 +122,7 @@ onMounted(() => {
       <el-empty v-if="!loading && tableData.length === 0" description="暂无数据" />
       <template v-else>
         <el-table v-loading="loading" :border="false" :data="tableData">
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="id" label="ID" min-width="180" show-overflow-tooltip />
         <el-table-column prop="resourceTitle" label="资源" min-width="160" />
         <el-table-column prop="contactName" label="联系人" width="100" />
         <el-table-column prop="contactPhone" label="联系电话" width="130" />

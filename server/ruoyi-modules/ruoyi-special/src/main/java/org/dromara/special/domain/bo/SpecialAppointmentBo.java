@@ -32,7 +32,7 @@ public class SpecialAppointmentBo implements Serializable {
     /**
      * 资源ID
      */
-    @NotNull(message = "资源ID不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = "资源ID不能为空", groups = {AddGroup.class})
     private Long resourceId;
 
     /**
@@ -48,13 +48,13 @@ public class SpecialAppointmentBo implements Serializable {
     /**
      * 联系人
      */
-    @NotBlank(message = "联系人不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotBlank(message = "联系人不能为空", groups = {AddGroup.class})
     private String contactName;
 
     /**
      * 联系电话
      */
-    @NotBlank(message = "联系电话不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotBlank(message = "联系电话不能为空", groups = {AddGroup.class})
     private String contactPhone;
 
     /**

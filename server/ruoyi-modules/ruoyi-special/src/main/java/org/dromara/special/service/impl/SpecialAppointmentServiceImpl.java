@@ -12,11 +12,16 @@ import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.special.domain.SpecialAppointment;
 import org.dromara.special.domain.SpecialResource;
+import org.dromara.special.domain.SpecialTeacher;
 import org.dromara.special.domain.bo.SpecialAppointmentBo;
 import org.dromara.special.domain.vo.SpecialAppointmentVo;
 import org.dromara.special.mapper.SpecialAppointmentMapper;
 import org.dromara.special.mapper.SpecialResourceMapper;
+import org.dromara.special.mapper.SpecialTeacherMapper;
 import org.dromara.special.service.ISpecialAppointmentService;
+import org.dromara.special.util.SpecialAuditSupport;
+import org.dromara.system.domain.vo.SysUserVo;
+import org.dromara.system.service.ISysUserService;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -33,6 +38,8 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
 
     private final SpecialAppointmentMapper baseMapper;
     private final SpecialResourceMapper resourceMapper;
+    private final SpecialTeacherMapper teacherMapper;
+    private final ISysUserService userService;
 
     @Override
     public SpecialAppointmentVo queryById(Long id) {
@@ -64,12 +71,24 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
 
     @Override
     public Boolean createMobileAppointment(SpecialAppointmentBo bo) {
-        SpecialResource resource = resourceMapper.selectById(bo.getResourceId());
-        if (resource == null || !Integer.valueOf(1).equals(resource.getStatus())) {
-            throw new ServiceException("资源不存在或未发布，无法预约");
+        requirePhoneBound();
+        if (bo.getTeacherId() != null) {
+            SpecialTeacher teacher = teacherMapper.selectById(bo.getTeacherId());
+            if (teacher == null || !Integer.valueOf(SpecialAuditSupport.APPROVED).equals(teacher.getStatus())) {
+                throw new ServiceException("老师不存在或未通过审核");
+            }
+            if (StringUtils.isBlank(bo.getResourceTitle())) {
+                bo.setResourceTitle(teacher.getName());
+            }
         }
-        if (StringUtils.isBlank(bo.getResourceTitle())) {
-            bo.setResourceTitle(resource.getTitle());
+        if (bo.getResourceId() != null) {
+            SpecialResource resource = resourceMapper.selectById(bo.getResourceId());
+            if (resource == null || !Integer.valueOf(1).equals(resource.getStatus())) {
+                throw new ServiceException("资源不存在或未发布，无法预约");
+            }
+            if (StringUtils.isBlank(bo.getResourceTitle())) {
+                bo.setResourceTitle(resource.getTitle());
+            }
         }
         if (LoginHelper.isLogin()) {
             bo.setUserId(LoginHelper.getUserId());
@@ -92,12 +111,23 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
         lqw.eq(bo.getResourceId() != null, SpecialAppointment::getResourceId, bo.getResourceId());
         lqw.like(StringUtils.isNotBlank(bo.getResourceTitle()), SpecialAppointment::getResourceTitle, bo.getResourceTitle());
         lqw.eq(bo.getUserId() != null, SpecialAppointment::getUserId, bo.getUserId());
+        lqw.eq(bo.getTeacherId() != null, SpecialAppointment::getTeacherId, bo.getTeacherId());
         lqw.like(StringUtils.isNotBlank(bo.getContactName()), SpecialAppointment::getContactName, bo.getContactName());
         lqw.eq(StringUtils.isNotBlank(bo.getContactPhone()), SpecialAppointment::getContactPhone, bo.getContactPhone());
         lqw.eq(bo.getAppointStatus() != null, SpecialAppointment::getAppointStatus, bo.getAppointStatus());
         lqw.eq(bo.getHandlerId() != null, SpecialAppointment::getHandlerId, bo.getHandlerId());
         lqw.orderByDesc(SpecialAppointment::getCreateTime);
         return lqw;
+    }
+
+    private void requirePhoneBound() {
+        if (!LoginHelper.isLogin()) {
+            throw new ServiceException("请先绑定手机号");
+        }
+        SysUserVo user = userService.selectUserById(LoginHelper.getUserId());
+        if (user == null || StringUtils.isBlank(user.getPhoneNumber())) {
+            throw new ServiceException("请先绑定手机号");
+        }
     }
 
     private void validEntityBeforeSave(SpecialAppointment entity) {

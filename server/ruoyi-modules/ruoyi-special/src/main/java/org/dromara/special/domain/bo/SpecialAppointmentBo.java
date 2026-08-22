@@ -1,6 +1,8 @@
 package org.dromara.special.domain.bo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.github.linpeilie.annotations.AutoMapper;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -32,7 +34,6 @@ public class SpecialAppointmentBo implements Serializable {
     /**
      * 资源ID
      */
-    @NotNull(message = "资源ID不能为空", groups = {AddGroup.class})
     private Long resourceId;
 
     /**
@@ -44,6 +45,11 @@ public class SpecialAppointmentBo implements Serializable {
      * 用户ID
      */
     private Long userId;
+
+    /**
+     * 老师档案ID
+     */
+    private Long teacherId;
 
     /**
      * 联系人
@@ -81,5 +87,11 @@ public class SpecialAppointmentBo implements Serializable {
      * 处理备注
      */
     private String handlerRemark;
+
+    @JsonIgnore
+    @AssertTrue(message = "资源ID和老师ID不能同时为空", groups = {AddGroup.class})
+    public boolean hasResourceOrTeacher() {
+        return resourceId != null || teacherId != null;
+    }
 
 }

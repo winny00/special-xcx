@@ -57,5 +57,16 @@ export function getTeacherList(params: {
 }
 
 export function getTeacherDetail(id: string | number) {
-  return http.get<ISpecialTeacher>(`/special/mobile/teacher/${id}`)
+  return http.get<ISpecialTeacher>(`/special/mobile/teacher/${id}`).then((row) => {
+    if (!row) {
+      return row
+    }
+    return {
+      ...row,
+      id: row.id == null ? row.id : String(row.id),
+      userId: row.userId == null ? row.userId : String(row.userId),
+      orgId: row.orgId == null ? row.orgId : String(row.orgId),
+      resourceId: row.resourceId == null ? row.resourceId : String(row.resourceId),
+    }
+  })
 }

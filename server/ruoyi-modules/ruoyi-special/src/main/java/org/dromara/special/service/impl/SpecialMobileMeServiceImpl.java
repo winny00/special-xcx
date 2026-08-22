@@ -213,9 +213,14 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
     }
 
     @Override
-    public PageResult<SpecialAppointmentVo> listMyAppointments(PageQuery pageQuery) {
+    public PageResult<SpecialAppointmentVo> listMyAppointments(PageQuery pageQuery, Integer appointStatus) {
         SpecialAppointmentBo bo = new SpecialAppointmentBo();
-        bo.setUserId(LoginHelper.getUserId());
+        if (appointStatus != null) {
+            bo.setAppointStatus(appointStatus);
+        }
+        if (!applyMyAppointmentScope(bo)) {
+            return PageResult.build(List.of(), 0);
+        }
         return appointmentService.queryPageList(bo, pageQuery);
     }
 
@@ -225,8 +230,7 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         if (vo == null) {
             throw new ServiceException("预约不存在");
         }
-        Long userId = LoginHelper.getUserId();
-        if (vo.getUserId() == null || !userId.equals(vo.getUserId())) {
+        if (!canViewMyAppointment(vo)) {
             throw new ServiceException("无权查看该预约");
         }
         return vo;
@@ -500,6 +504,36 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         if (!SpecialIdentitySupport.TEACHER_ROLE_KEY.equals(SpecialCurrentRoleStore.read())) {
             throw new ServiceException("当前账号没有该身份");
         }
+    }
+
+    /**
+     * @return false when teacher identity has no archive row (empty list, do not invent)
+     */
+    private boolean applyMyAppointmentScope(SpecialAppointmentBo bo) {
+        if (SpecialIdentitySupport.TEACHER_ROLE_KEY.equals(SpecialCurrentRoleStore.read())) {
+            SpecialTeacher teacher = findOwnTeacher();
+            if (teacher == null) {
+                return false;
+            }
+            bo.setTeacherId(teacher.getId());
+            return true;
+        }
+        bo.setUserId(LoginHelper.getUserId());
+        return true;
+    }
+
+    private boolean canViewMyAppointment(SpecialAppointmentVo vo) {
+        if (SpecialIdentitySupport.TEACHER_ROLE_KEY.equals(SpecialCurrentRoleStore.read())) {
+            SpecialTeacher teacher = findOwnTeacher();
+            return teacher != null && teacher.getId() != null && teacher.getId().equals(vo.getTeacherId());
+        }
+        Long userId = LoginHelper.getUserId();
+        return vo.getUserId() != null && userId.equals(vo.getUserId());
+    }
+
+    private SpecialTeacher findOwnTeacher() {
+        return teacherMapper.selectOne(
+            Wrappers.<SpecialTeacher>lambdaQuery().eq(SpecialTeacher::getUserId, LoginHelper.getUserId()));
     }
 
     private RoleDTO matchRole(LoginUser loginUser, String roleKey) {

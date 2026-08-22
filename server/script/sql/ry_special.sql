@@ -54,9 +54,10 @@ CREATE TABLE IF NOT EXISTS special_organization (
 -- 预约/咨询申请表
 CREATE TABLE IF NOT EXISTS special_appointment (
     id              bigint(20)      NOT NULL                    COMMENT '主键',
-    resource_id     bigint(20)      NOT NULL                    COMMENT '关联资源ID',
+    resource_id     bigint(20)      DEFAULT NULL                COMMENT '关联资源ID',
     resource_title  varchar(200)    DEFAULT NULL                COMMENT '资源标题快照',
     user_id         bigint(20)      DEFAULT NULL                COMMENT '申请人用户ID',
+    teacher_id      bigint(20)      DEFAULT NULL                COMMENT '老师档案ID',
     contact_name    varchar(50)     NOT NULL                    COMMENT '联系人',
     contact_phone   varchar(20)     NOT NULL                    COMMENT '联系电话',
     child_age       varchar(20)     DEFAULT NULL                COMMENT '儿童年龄',

@@ -139,8 +139,8 @@ async function loadTeacherHome() {
     console.error('加载老师资料失败', e)
   }
   try {
-    const res = await getMyAppointments({ pageNum: 1, pageSize: 50 })
-    pendingCount.value = (res.rows || []).filter(item => (item.appointStatus ?? 0) === 0).length
+    const res = await getMyAppointments({ pageNum: 1, pageSize: 1, appointStatus: 0 })
+    pendingCount.value = Number(res.total) || 0
   }
   catch (e) {
     console.error('加载预约失败', e)

@@ -49,7 +49,7 @@ public interface ISpecialAppointmentService {
     Boolean insertByBo(SpecialAppointmentBo bo);
 
     /**
-     * 移动端创建预约（登录可选）
+     * 移动端创建预约（须登录且已绑定手机号）
      *
      * @param bo 业务对象
      * @return 是否新增成功

@@ -47,11 +47,11 @@ public class SpecialMobileMeController extends BaseController {
     }
 
     /**
-     * 当前用户预约列表
+     * 当前用户预约列表。老师身份返回收到的预约；appointStatus 可选。
      */
     @GetMapping("/appointments")
-    public R<PageResult<SpecialAppointmentVo>> appointments(PageQuery pageQuery) {
-        return R.ok(mobileMeService.listMyAppointments(pageQuery));
+    public R<PageResult<SpecialAppointmentVo>> appointments(PageQuery pageQuery, Integer appointStatus) {
+        return R.ok(mobileMeService.listMyAppointments(pageQuery, appointStatus));
     }
 
     /**

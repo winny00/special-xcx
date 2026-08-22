@@ -48,6 +48,12 @@ public class SpecialAppointmentVo implements Serializable {
     private Long userId;
 
     /**
+     * 老师档案ID
+     */
+    @ExcelProperty(value = "老师档案ID")
+    private Long teacherId;
+
+    /**
      * 联系人
      */
     @ExcelProperty(value = "联系人")

@@ -47,7 +47,8 @@ export interface ISpecialArticle {
 /** 预约申请 */
 export interface ISpecialAppointment {
   id?: string | number
-  resourceId: string | number
+  resourceId?: string | number
+  teacherId?: string | number
   resourceTitle?: string
   contactName: string
   contactPhone: string
@@ -92,4 +93,5 @@ export interface ISpecialTeacher {
   orgId?: string | number
   intro?: string
   status?: number
+  resourceId?: string | number
 }

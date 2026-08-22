@@ -17,7 +17,8 @@ export interface IMobileProfile {
 /** 我的预约 */
 export interface IMyAppointment {
   id: string | number
-  resourceId: string | number
+  resourceId?: string | number
+  teacherId?: string | number
   resourceTitle?: string
   contactName?: string
   contactPhone?: string
@@ -27,6 +28,15 @@ export interface IMyAppointment {
   handlerRemark?: string
   createTime?: string
   updateTime?: string
+}
+
+function mapAppointmentIds(row: IMyAppointment) {
+  return {
+    ...row,
+    id: row.id == null ? row.id : String(row.id),
+    resourceId: row.resourceId == null ? row.resourceId : String(row.resourceId),
+    teacherId: row.teacherId == null ? row.teacherId : String(row.teacherId),
+  }
 }
 
 export function getMyProfile() {
@@ -40,12 +50,20 @@ export function updateMyProfile(data: { nickname?: string, phone?: string }) {
   return http.put<void>('/special/mobile/me/profile', data)
 }
 
-export function getMyAppointments(params: { pageNum?: number, pageSize?: number }) {
-  return http.get<IRuoYiPageResult<IMyAppointment>>('/special/mobile/me/appointments', params)
+export function getMyAppointments(params: { pageNum?: number, pageSize?: number, appointStatus?: number }) {
+  return http.get<IRuoYiPageResult<IMyAppointment>>('/special/mobile/me/appointments', params).then((res) => ({
+    ...res,
+    rows: (res.rows || []).map(mapAppointmentIds),
+  }))
 }
 
 export function getMyAppointmentDetail(id: string | number) {
-  return http.get<IMyAppointment>(`/special/mobile/me/appointments/${id}`)
+  return http.get<IMyAppointment>(`/special/mobile/me/appointments/${id}`).then((row) => {
+    if (!row) {
+      return row
+    }
+    return mapAppointmentIds(row)
+  })
 }
 
 export interface IBindPhoneVo {
@@ -68,6 +86,7 @@ export function getMyTeacherProfile() {
       id: row.id == null ? row.id : String(row.id),
       userId: row.userId == null ? row.userId : String(row.userId),
       orgId: row.orgId == null ? row.orgId : String(row.orgId),
+      resourceId: row.resourceId == null ? row.resourceId : String(row.resourceId),
     }
   })
 }

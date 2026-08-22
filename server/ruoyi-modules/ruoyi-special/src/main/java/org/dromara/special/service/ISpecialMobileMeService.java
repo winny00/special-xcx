@@ -28,9 +28,9 @@ public interface ISpecialMobileMeService {
     Boolean updateProfile(SpecialMobileProfileBo bo);
 
     /**
-     * 分页查询当前用户预约
+     * 分页查询当前用户预约。老师身份按档案 teacherId；可按 appointStatus 过滤。
      */
-    PageResult<SpecialAppointmentVo> listMyAppointments(PageQuery pageQuery);
+    PageResult<SpecialAppointmentVo> listMyAppointments(PageQuery pageQuery, Integer appointStatus);
 
     /**
      * 查询当前用户预约详情

@@ -9,7 +9,6 @@ defineProps<{
 const emit = defineEmits<{
   'toggle-collapse': []
   logout: []
-  refresh: []
 }>()
 
 function onLogout() {
@@ -37,7 +36,7 @@ function onLogout() {
     </div>
     <div class="fg-header__center">
       <div class="fg-header__crumbs">
-        <FgBreadcrumb @refresh="emit('refresh')" />
+        <FgBreadcrumb />
       </div>
     </div>
     <div class="fg-header__right">

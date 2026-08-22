@@ -52,8 +52,8 @@ onMounted(() => {
       <FgSidebar :collapsed="collapsed" />
     </el-aside>
     <el-container class="layout-main" direction="vertical">
-      <FgHeader :collapsed="collapsed" @toggle-collapse="toggleSidebar" @logout="handleLogout" @refresh="handleRefresh" />
-      <FgTabsBar />
+      <FgHeader :collapsed="collapsed" @toggle-collapse="toggleSidebar" @logout="handleLogout" />
+      <FgTabsBar @refresh="handleRefresh" />
       <el-main class="main">
         <router-view v-slot="{ Component, route: r }">
           <keep-alive :max="10">

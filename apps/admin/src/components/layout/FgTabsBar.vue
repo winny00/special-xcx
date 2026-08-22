@@ -2,6 +2,10 @@
 import { useRoute, useRouter } from 'vue-router'
 import { useTabsStore } from '@/stores/tabs'
 
+const emit = defineEmits<{
+  refresh: []
+}>()
+
 const route = useRoute()
 const router = useRouter()
 const tabsStore = useTabsStore()
@@ -19,8 +23,8 @@ function onCloseTab(path: string, event: MouseEvent) {
 </script>
 
 <template>
-  <div class="fg-tabs-bar" role="tablist" aria-label="页面标签">
-    <div class="fg-tabs-bar__scroll">
+  <div class="fg-tabs-bar">
+    <div class="fg-tabs-bar__scroll" role="tablist" aria-label="页面标签">
       <button
         v-for="tab in tabsStore.tabs"
         :key="tab.path"
@@ -46,11 +50,25 @@ function onCloseTab(path: string, event: MouseEvent) {
         </span>
       </button>
     </div>
+    <button
+      type="button"
+      class="fg-tabs-bar__refresh"
+      aria-label="刷新当前页"
+      title="刷新当前页"
+      @click="emit('refresh')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12a9 9 0 1 1-3-6.7" />
+        <path d="M21 3v6h-6" />
+      </svg>
+    </button>
   </div>
 </template>
 
 <style scoped>
 .fg-tabs-bar {
+  display: flex;
+  align-items: stretch;
   flex-shrink: 0;
   background: var(--fg-surface);
   border-bottom: 1px solid var(--fg-border);
@@ -58,11 +76,39 @@ function onCloseTab(path: string, event: MouseEvent) {
 
 .fg-tabs-bar__scroll {
   display: flex;
+  flex: 1;
   align-items: stretch;
   gap: 0;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
+}
+
+.fg-tabs-bar__refresh {
+  flex: 0 0 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--fg-border);
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.fg-tabs-bar__refresh svg {
+  width: 16px;
+  height: 16px;
+}
+
+.fg-tabs-bar__refresh:hover,
+.fg-tabs-bar__refresh:focus-visible {
+  color: var(--fg-primary);
+  background: var(--fg-primary-soft);
 }
 
 .fg-tab {

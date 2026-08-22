@@ -11,6 +11,7 @@ import org.dromara.special.domain.vo.SpecialAppointmentVo;
 import org.dromara.special.mapper.SpecialAppointmentMapper;
 import org.dromara.special.mapper.SpecialResourceMapper;
 import org.dromara.special.mapper.SpecialTeacherMapper;
+import org.dromara.special.util.SpecialCurrentRoleStore;
 import org.dromara.system.api.model.LoginUser;
 import org.dromara.system.service.ISysUserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,14 +73,83 @@ class SpecialAppointmentServiceImplScopeTest {
         query.setPageNum(1);
         query.setPageSize(10);
 
-        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<SpecialCurrentRoleStore> store = mockStatic(SpecialCurrentRoleStore.class)) {
             helper.when(LoginHelper::getLoginUser).thenReturn(teacherLogin());
             helper.when(LoginHelper::getUserId).thenReturn(USER_ID);
+            store.when(SpecialCurrentRoleStore::read).thenReturn("special_teacher");
 
             service.queryPageList(bo, query);
         }
 
         assertEquals(OWN_TEACHER_ID, bo.getTeacherId());
+    }
+
+    @Test
+    void dualRoleParentListForcesOwnUserIdWithoutTeacherId() {
+        Page<SpecialAppointmentVo> page = new Page<>(1, 10);
+        page.setRecords(List.of());
+        page.setTotal(0);
+        when(appointmentMapper.selectVoPage(any(), any())).thenReturn(page);
+        SpecialAppointmentBo bo = new SpecialAppointmentBo();
+        PageQuery query = new PageQuery();
+        query.setPageNum(1);
+        query.setPageSize(10);
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<SpecialCurrentRoleStore> store = mockStatic(SpecialCurrentRoleStore.class)) {
+            helper.when(LoginHelper::getLoginUser).thenReturn(dualRoleLogin());
+            helper.when(LoginHelper::getUserId).thenReturn(USER_ID);
+            store.when(SpecialCurrentRoleStore::read).thenReturn("special_parent");
+
+            service.queryPageList(bo, query);
+        }
+
+        assertEquals(USER_ID, bo.getUserId());
+        assertNull(bo.getTeacherId());
+    }
+
+    @Test
+    void dualRoleParentCanReadOwnAppointmentByUserId() {
+        SpecialAppointmentVo vo = new SpecialAppointmentVo();
+        vo.setId(1L);
+        vo.setUserId(USER_ID);
+        vo.setTeacherId(8888L);
+        when(appointmentMapper.selectVoById(1L)).thenReturn(vo);
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<SpecialCurrentRoleStore> store = mockStatic(SpecialCurrentRoleStore.class)) {
+            helper.when(LoginHelper::getLoginUser).thenReturn(dualRoleLogin());
+            helper.when(LoginHelper::getUserId).thenReturn(USER_ID);
+            store.when(SpecialCurrentRoleStore::read).thenReturn("special_parent");
+
+            assertEquals(1L, service.queryById(1L).getId());
+        }
+    }
+
+    @Test
+    void dualRoleTeacherListStillForcesOwnTeacherId() {
+        when(teacherMapper.selectOne(any())).thenReturn(ownTeacher());
+        Page<SpecialAppointmentVo> page = new Page<>(1, 10);
+        page.setRecords(List.of());
+        page.setTotal(0);
+        when(appointmentMapper.selectVoPage(any(), any())).thenReturn(page);
+        SpecialAppointmentBo bo = new SpecialAppointmentBo();
+        PageQuery query = new PageQuery();
+        query.setPageNum(1);
+        query.setPageSize(10);
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<SpecialCurrentRoleStore> store = mockStatic(SpecialCurrentRoleStore.class)) {
+            helper.when(LoginHelper::getLoginUser).thenReturn(dualRoleLogin());
+            helper.when(LoginHelper::getUserId).thenReturn(USER_ID);
+            store.when(SpecialCurrentRoleStore::read).thenReturn("special_teacher");
+
+            service.queryPageList(bo, query);
+        }
+
+        assertEquals(OWN_TEACHER_ID, bo.getTeacherId());
+        assertNull(bo.getUserId());
     }
 
     @Test
@@ -93,9 +163,11 @@ class SpecialAppointmentServiceImplScopeTest {
         own.setUserId(USER_ID);
         when(teacherMapper.selectOne(any())).thenReturn(own);
 
-        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<SpecialCurrentRoleStore> store = mockStatic(SpecialCurrentRoleStore.class)) {
             helper.when(LoginHelper::getLoginUser).thenReturn(teacherLogin());
             helper.when(LoginHelper::getUserId).thenReturn(USER_ID);
+            store.when(SpecialCurrentRoleStore::read).thenReturn("special_teacher");
 
             ServiceException ex = assertThrows(ServiceException.class, () -> service.queryById(1L));
             assertEquals("没有权限访问", ex.getMessage());
@@ -122,9 +194,11 @@ class SpecialAppointmentServiceImplScopeTest {
         bo.setRemark("篡改备注");
         ArgumentCaptor<SpecialAppointment> captor = ArgumentCaptor.forClass(SpecialAppointment.class);
 
-        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<SpecialCurrentRoleStore> store = mockStatic(SpecialCurrentRoleStore.class)) {
             helper.when(LoginHelper::getLoginUser).thenReturn(teacherLogin());
             helper.when(LoginHelper::getUserId).thenReturn(USER_ID);
+            store.when(SpecialCurrentRoleStore::read).thenReturn("special_teacher");
             service.updateByBo(bo);
         }
 
@@ -157,9 +231,11 @@ class SpecialAppointmentServiceImplScopeTest {
         bo.setId(1L);
         bo.setAppointStatus(1);
 
-        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<SpecialCurrentRoleStore> store = mockStatic(SpecialCurrentRoleStore.class)) {
             helper.when(LoginHelper::getLoginUser).thenReturn(teacherLogin());
             helper.when(LoginHelper::getUserId).thenReturn(USER_ID);
+            store.when(SpecialCurrentRoleStore::read).thenReturn("special_teacher");
 
             ServiceException ex = assertThrows(ServiceException.class, () -> service.updateByBo(bo));
             assertEquals("没有权限访问", ex.getMessage());
@@ -191,6 +267,13 @@ class SpecialAppointmentServiceImplScopeTest {
         LoginUser user = new LoginUser();
         user.setUserId(USER_ID);
         user.setRolePermission(Set.of("special_teacher"));
+        return user;
+    }
+
+    private static LoginUser dualRoleLogin() {
+        LoginUser user = new LoginUser();
+        user.setUserId(USER_ID);
+        user.setRolePermission(Set.of("special_parent", "special_teacher"));
         return user;
     }
 }

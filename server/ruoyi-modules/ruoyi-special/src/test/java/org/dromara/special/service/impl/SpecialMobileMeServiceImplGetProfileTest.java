@@ -1,6 +1,7 @@
 package org.dromara.special.service.impl;
 
 import org.dromara.common.satoken.utils.LoginHelper;
+import org.dromara.special.domain.bo.SpecialMobileProfileBo;
 import org.dromara.special.domain.vo.SpecialMobileProfileVo;
 import org.dromara.special.mapper.SpecialAppointmentMapper;
 import org.dromara.special.mapper.SpecialTeacherMapper;
@@ -8,6 +9,7 @@ import org.dromara.special.service.ISpecialAppointmentService;
 import org.dromara.special.util.SpecialCurrentRoleStore;
 import org.dromara.system.api.domain.RoleDTO;
 import org.dromara.system.api.model.LoginUser;
+import org.dromara.system.domain.bo.SysUserBo;
 import org.dromara.system.domain.vo.SysUserVo;
 import org.dromara.system.mapper.SysSocialMapper;
 import org.dromara.system.mapper.SysUserRoleMapper;
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,7 +34,10 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Tags({@Tag("local"), @Tag("dev"), @Tag("prod")})
@@ -113,6 +119,27 @@ class SpecialMobileMeServiceImplGetProfileTest {
             assertFalse(vo.getPhoneBound());
             assertEquals(null, vo.getPhone());
         }
+    }
+
+    @Test
+    void updateProfileIgnoresPhoneAndOnlyWritesNickname() {
+        SpecialMobileProfileBo bo = new SpecialMobileProfileBo();
+        bo.setNickname("新昵称");
+        bo.setPhone("13900139000");
+        when(userService.updateUserProfile(any(SysUserBo.class))).thenReturn(1);
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+            helper.when(LoginHelper::getUserId).thenReturn(USER_ID);
+
+            assertTrue(service.updateProfile(bo));
+        }
+
+        ArgumentCaptor<SysUserBo> captor = ArgumentCaptor.forClass(SysUserBo.class);
+        verify(userService).updateUserProfile(captor.capture());
+        assertEquals(USER_ID, captor.getValue().getUserId());
+        assertEquals("新昵称", captor.getValue().getNickName());
+        assertEquals(null, captor.getValue().getPhoneNumber());
+        verify(userService, never()).checkPhoneUnique(any(SysUserBo.class));
     }
 
     private static SysUserVo user(String phone) {

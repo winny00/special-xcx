@@ -208,12 +208,6 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         if (StringUtils.isNotBlank(bo.getNickname())) {
             user.setNickName(bo.getNickname());
         }
-        if (StringUtils.isNotBlank(bo.getPhone())) {
-            user.setPhoneNumber(bo.getPhone());
-        }
-        if (StringUtils.isNotBlank(user.getPhoneNumber()) && !userService.checkPhoneUnique(user)) {
-            throw new ServiceException("手机号码已存在");
-        }
         return DataPermissionHelper.ignore(() -> userService.updateUserProfile(user)) > 0;
     }
 
@@ -284,7 +278,7 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         Long phoneOwnerId = phoneOwner == null ? null : phoneOwner.getUserId();
         boolean openidBoundToOther = isOpenidBoundToOther(currentUserId);
         SpecialBindPhonePlanner.BindPlan plan = SpecialBindPhonePlanner.plan(
-            currentUserId, current.getPhoneNumber(), phoneOwnerId, openidBoundToOther);
+            currentUserId, current.getPhoneNumber(), phone, phoneOwnerId, openidBoundToOther);
         if (plan.action() == SpecialBindPhonePlanner.BindAction.REJECT) {
             throw new ServiceException(plan.message());
         }

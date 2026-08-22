@@ -253,7 +253,7 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
 
     /**
      * user_id 换绑后收回旧账号的老师角色，避免无档案的老师登录。
-     * 旧账号仍有家长身份时保留家长；仅老师则只撤老师角色。
+     * 旧账号仍有家长或超管身份时保持启用；仅老师则撤角色并停用。
      */
     private void revokeTeacherRoleIfUserMoved(Long previousUserId, Long newUserId) {
         if (previousUserId == null || newUserId == null || previousUserId.equals(newUserId)) {
@@ -262,12 +262,14 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
         if (!hasTeacherRole(previousUserId)) {
             return;
         }
-        if (hasParentRole(previousUserId)) {
-            SpecialIdentitySupport.assertKeepAtLeastOneRole(true, false);
-        }
+        boolean keepEnabled = hasParentRole(previousUserId)
+            || hasRole(previousUserId, SpecialIdentitySupport.SUPERADMIN_ROLE_KEY);
         userRoleMapper.delete(Wrappers.<SysUserRole>lambdaQuery()
             .eq(SysUserRole::getUserId, previousUserId)
             .eq(SysUserRole::getRoleId, resolveTeacherRoleId()));
+        if (!keepEnabled) {
+            userService.updateUserStatus(previousUserId, SystemConstants.DISABLE);
+        }
     }
 
     private Long resolveTeacherRoleId() {

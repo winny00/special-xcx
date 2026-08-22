@@ -270,6 +270,25 @@ class SpecialTeacherServiceImplTest {
         verify(userRoleMapper).delete(any());
     }
 
+    @Test
+    void rebindingPhoneDisablesPreviousUserWhenTeacherWasOnlyRole() {
+        String newPhone = "13900139000";
+        when(userService.selectUserByPhoneNumber(newPhone)).thenReturn(user(20L, newPhone));
+        when(roleService.selectRolesByUserId(20L)).thenReturn(List.of(role("special_parent", 7L)));
+        when(roleService.selectRolesByUserId(10L)).thenReturn(List.of(role("special_teacher", 8L)));
+        when(roleService.selectRoleAll()).thenReturn(List.of(role("special_teacher", 8L)));
+        when(baseMapper.selectOne(any())).thenReturn(null);
+
+        SpecialTeacherBo bo = new SpecialTeacherBo();
+        bo.setName("周老师");
+        bo.setPhone(newPhone);
+
+        assertEquals(20L, service.bindAccountByPhone(bo, 1L, 10L));
+
+        verify(userRoleMapper).delete(any());
+        verify(userService).updateUserStatus(10L, SystemConstants.DISABLE);
+    }
+
     private static SysUserVo user(Long userId, String phone) {
         SysUserVo user = new SysUserVo();
         user.setUserId(userId);

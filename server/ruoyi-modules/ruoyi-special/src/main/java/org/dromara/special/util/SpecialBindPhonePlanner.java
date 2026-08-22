@@ -44,9 +44,18 @@ public final class SpecialBindPhonePlanner {
     private SpecialBindPhonePlanner() {
     }
 
-    public static BindPlan plan(Long currentUserId, String currentPhone, Long phoneOwnerId, boolean openidBoundToOther) {
+    public static BindPlan plan(
+        Long currentUserId,
+        String currentPhone,
+        String targetPhone,
+        Long phoneOwnerId,
+        boolean openidBoundToOther
+    ) {
         if (openidBoundToOther) {
             return new BindPlan(BindAction.REJECT, null, null, "该微信已绑定其他账号");
+        }
+        if (currentPhone != null && !currentPhone.isBlank() && !currentPhone.equals(targetPhone)) {
+            return new BindPlan(BindAction.REJECT, null, null, "当前账号已绑定其他手机号");
         }
         if (phoneOwnerId == null || phoneOwnerId.equals(currentUserId)) {
             return new BindPlan(BindAction.WRITE_PHONE, currentUserId, null, null);

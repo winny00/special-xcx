@@ -112,8 +112,13 @@ async function submitBind(payload: { phone?: string, smsCode?: string, wxPhoneCo
   submitting.value = true
   try {
     const vo = await bindMyPhone(payload)
+    const accessToken = typeof vo.access_token === 'string' ? vo.access_token.trim() : ''
+    if (!accessToken) {
+      toast('登录状态更新失败，请重新登录')
+      return
+    }
     tokenStore.setTokenInfo({
-      token: vo.access_token || '',
+      token: accessToken,
       expiresIn: Number(vo.expire_in) || 7200,
     })
     const info = await userStore.fetchUserInfo()

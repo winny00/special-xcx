@@ -20,6 +20,7 @@ import org.dromara.special.mapper.SpecialResourceMapper;
 import org.dromara.special.mapper.SpecialTeacherMapper;
 import org.dromara.special.service.ISpecialAppointmentService;
 import org.dromara.special.util.SpecialAuditSupport;
+import org.dromara.special.util.SpecialCurrentRoleStore;
 import org.dromara.special.util.SpecialIdentitySupport;
 import org.dromara.system.domain.vo.SysUserVo;
 import org.dromara.system.service.ISysUserService;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 特教预约Service业务层处理
@@ -45,13 +47,15 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
     @Override
     public SpecialAppointmentVo queryById(Long id) {
         SpecialAppointmentVo vo = baseMapper.selectVoById(id);
-        assertOwnsAppointment(vo == null ? null : vo.getTeacherId());
+        assertOwnsAppointment(
+            vo == null ? null : vo.getUserId(),
+            vo == null ? null : vo.getTeacherId());
         return vo;
     }
 
     @Override
     public PageResult<SpecialAppointmentVo> queryPageList(SpecialAppointmentBo bo, PageQuery pageQuery) {
-        applySelfTeacherId(bo);
+        applySelfScope(bo);
         LambdaQueryWrapper<SpecialAppointment> lqw = buildQueryWrapper(bo);
         Page<SpecialAppointmentVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         return PageResult.build(result.getRecords(), result.getTotal());
@@ -59,7 +63,7 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
 
     @Override
     public List<SpecialAppointmentVo> queryList(SpecialAppointmentBo bo) {
-        applySelfTeacherId(bo);
+        applySelfScope(bo);
         return baseMapper.selectVoList(buildQueryWrapper(bo));
     }
 
@@ -107,7 +111,9 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
     @Override
     public Boolean updateByBo(SpecialAppointmentBo bo) {
         SpecialAppointment current = bo.getId() == null ? null : baseMapper.selectById(bo.getId());
-        assertOwnsAppointment(current == null ? null : current.getTeacherId());
+        assertOwnsAppointment(
+            current == null ? null : current.getUserId(),
+            current == null ? null : current.getTeacherId());
         SpecialAppointment update = SpecialIdentitySupport.currentUserIsTeacherOnly()
             ? teacherProcessingUpdate(current, bo)
             : MapstructUtils.convert(bo, SpecialAppointment.class);
@@ -161,8 +167,12 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
         // 预留业务校验
     }
 
-    private void applySelfTeacherId(SpecialAppointmentBo bo) {
+    private void applySelfScope(SpecialAppointmentBo bo) {
         if (!SpecialIdentitySupport.currentUserIsTeacherOnly()) {
+            return;
+        }
+        if (!SpecialIdentitySupport.TEACHER_ROLE_KEY.equals(SpecialCurrentRoleStore.read())) {
+            bo.setUserId(LoginHelper.getUserId());
             return;
         }
         Long ownTeacherId = resolveOwnTeacherId();
@@ -179,11 +189,17 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
         return own == null ? null : own.getId();
     }
 
-    private void assertOwnsAppointment(Long rowTeacherId) {
-        boolean teacherOnly = SpecialIdentitySupport.currentUserIsTeacherOnly();
-        Long ownTeacherId = teacherOnly ? resolveOwnTeacherId() : null;
-        boolean owning = ownTeacherId != null && ownTeacherId.equals(rowTeacherId);
-        SpecialIdentitySupport.assertTeacherOwns(teacherOnly, owning);
+    private void assertOwnsAppointment(Long rowUserId, Long rowTeacherId) {
+        boolean scopedTeacher = SpecialIdentitySupport.currentUserIsTeacherOnly();
+        if (!scopedTeacher) {
+            return;
+        }
+        boolean teacherRole = SpecialIdentitySupport.TEACHER_ROLE_KEY.equals(SpecialCurrentRoleStore.read());
+        Long ownTeacherId = teacherRole ? resolveOwnTeacherId() : null;
+        boolean owning = teacherRole
+            ? ownTeacherId != null && ownTeacherId.equals(rowTeacherId)
+            : Objects.equals(LoginHelper.getUserId(), rowUserId);
+        SpecialIdentitySupport.assertTeacherOwns(true, owning);
     }
 
     @Override

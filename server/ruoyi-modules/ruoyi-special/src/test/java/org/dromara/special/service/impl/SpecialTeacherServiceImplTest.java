@@ -1,11 +1,15 @@
 package org.dromara.special.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.dromara.common.core.constant.SystemConstants;
+import org.dromara.common.core.domain.PageResult;
 import org.dromara.common.core.exception.ServiceException;
+import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.special.domain.SpecialTeacher;
 import org.dromara.special.domain.bo.SpecialTeacherBo;
 import org.dromara.special.domain.vo.SpecialTeacherVo;
 import org.dromara.special.mapper.SpecialTeacherMapper;
+import org.dromara.special.util.SpecialParentSupport;
 import org.dromara.system.domain.SysUserRole;
 import org.dromara.system.domain.bo.SysUserBo;
 import org.dromara.system.domain.vo.SysRoleVo;
@@ -25,6 +29,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -114,6 +120,95 @@ class SpecialTeacherServiceImplTest {
         ServiceException ex = assertThrows(ServiceException.class, () -> service.bindAccountByPhone(bo, null));
         assertEquals("该老师账号已存在", ex.getMessage());
         verify(userService, never()).insertUser(any());
+    }
+
+    @Test
+    void approvedDetailOmitsBoundLoginPhone() {
+        SpecialTeacher teacher = new SpecialTeacher();
+        teacher.setId(1L);
+        teacher.setStatus(1);
+        teacher.setUserId(10L);
+        when(baseMapper.selectById(1L)).thenReturn(teacher);
+        SpecialTeacherVo vo = new SpecialTeacherVo();
+        vo.setId(1L);
+        vo.setUserId(10L);
+        vo.setName("李老师");
+        vo.setPhone(PHONE);
+        when(baseMapper.selectVoById(1L)).thenReturn(vo);
+
+        SpecialTeacherVo result = service.queryApprovedById(1L);
+
+        assertNull(result.getPhone());
+    }
+
+    @Test
+    void approvedListOmitsBoundLoginPhone() {
+        SpecialTeacherVo vo = new SpecialTeacherVo();
+        vo.setId(1L);
+        vo.setUserId(10L);
+        vo.setName("李老师");
+        vo.setPhone(PHONE);
+        Page<SpecialTeacherVo> page = new Page<>(1, 10);
+        page.setRecords(List.of(vo));
+        page.setTotal(1);
+        when(baseMapper.selectVoPage(any(), any())).thenReturn(page);
+
+        PageQuery query = new PageQuery();
+        query.setPageNum(1);
+        query.setPageSize(10);
+        PageResult<SpecialTeacherVo> result = service.queryApprovedPageList(new SpecialTeacherBo(), query);
+
+        SpecialTeacherVo row = result.getRows().iterator().next();
+        assertNull(row.getPhone());
+    }
+
+    @Test
+    void adminDetailMasksBoundLoginPhone() {
+        SpecialTeacherVo vo = new SpecialTeacherVo();
+        vo.setId(1L);
+        vo.setUserId(10L);
+        vo.setName("李老师");
+        when(baseMapper.selectVoById(1L)).thenReturn(vo);
+        when(userService.selectUserByIds(any(), any())).thenReturn(List.of(user(10L, PHONE)));
+
+        SpecialTeacherVo result = service.queryById(1L);
+
+        assertEquals(SpecialParentSupport.maskPhone(PHONE), result.getPhone());
+        assertNotEquals(PHONE, result.getPhone());
+    }
+
+    @Test
+    void rebindingPhoneRevokesTeacherRoleOnPreviousUser() {
+        String newPhone = "13900139000";
+        when(userService.selectUserByPhoneNumber(newPhone)).thenReturn(user(20L, newPhone));
+        when(roleService.selectRolesByUserId(20L)).thenReturn(List.of(role("special_parent", 7L)));
+        when(roleService.selectRolesByUserId(10L)).thenReturn(List.of(
+            role("special_parent", 7L), role("special_teacher", 8L)));
+        when(roleService.selectRoleAll()).thenReturn(List.of(
+            role("special_parent", 7L), role("special_teacher", 8L)));
+        when(baseMapper.selectOne(any())).thenReturn(null);
+
+        SpecialTeacherBo bo = new SpecialTeacherBo();
+        bo.setName("周老师");
+        bo.setPhone(newPhone);
+
+        Long userId = service.bindAccountByPhone(bo, 1L, 10L);
+
+        assertEquals(20L, userId);
+        verify(userService, never()).insertUser(any(SysUserBo.class));
+        ArgumentCaptor<SysUserRole> inserted = ArgumentCaptor.forClass(SysUserRole.class);
+        verify(userRoleMapper).insert(inserted.capture());
+        assertEquals(20L, inserted.getValue().getUserId());
+        assertEquals(8L, inserted.getValue().getRoleId());
+        verify(userRoleMapper).delete(any());
+    }
+
+    private static SysUserVo user(Long userId, String phone) {
+        SysUserVo user = new SysUserVo();
+        user.setUserId(userId);
+        user.setPhoneNumber(phone);
+        user.setStatus(SystemConstants.NORMAL);
+        return user;
     }
 
     private static SysRoleVo role(String roleKey, Long roleId) {

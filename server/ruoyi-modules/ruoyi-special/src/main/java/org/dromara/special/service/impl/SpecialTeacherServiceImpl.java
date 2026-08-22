@@ -22,6 +22,7 @@ import org.dromara.special.mapper.SpecialTeacherMapper;
 import org.dromara.special.service.ISpecialTeacherService;
 import org.dromara.special.util.SpecialAuditSupport;
 import org.dromara.special.util.SpecialIdentitySupport;
+import org.dromara.special.util.SpecialParentSupport;
 import org.dromara.system.domain.SysUserRole;
 import org.dromara.system.domain.bo.SysUserBo;
 import org.dromara.system.domain.vo.SysRoleVo;
@@ -79,7 +80,7 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
         LambdaQueryWrapper<SpecialTeacher> lqw = buildQueryWrapper(bo);
         lqw.eq(SpecialTeacher::getStatus, SpecialAuditSupport.APPROVED);
         Page<SpecialTeacherVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
-        fillBoundPhones(result.getRecords());
+        omitLoginPhones(result.getRecords());
         return PageResult.build(result.getRecords(), result.getTotal());
     }
 
@@ -89,7 +90,9 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
         if (teacher == null || !Integer.valueOf(SpecialAuditSupport.APPROVED).equals(teacher.getStatus())) {
             throw new ServiceException("老师不存在或未通过审核");
         }
-        return queryById(id);
+        SpecialTeacherVo vo = baseMapper.selectVoById(id);
+        omitLoginPhones(vo == null ? List.of() : List.of(vo));
+        return vo;
     }
 
     @Override
@@ -111,7 +114,12 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateByBo(SpecialTeacherBo bo) {
         SpecialTeacher update = MapstructUtils.convert(bo, SpecialTeacher.class);
-        Long boundUserId = bindAccountByPhone(bo, bo.getId());
+        Long previousUserId = null;
+        if (bo.getId() != null) {
+            SpecialTeacher current = baseMapper.selectById(bo.getId());
+            previousUserId = current == null ? null : current.getUserId();
+        }
+        Long boundUserId = bindAccountByPhone(bo, bo.getId(), previousUserId);
         if (boundUserId != null) {
             update.setUserId(boundUserId);
         }
@@ -153,6 +161,10 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
      * 按手机号合并或创建老师登录账号，写入 user_id。无手机号则不建号。
      */
     Long bindAccountByPhone(SpecialTeacherBo bo, Long currentTeacherId) {
+        return bindAccountByPhone(bo, currentTeacherId, null);
+    }
+
+    Long bindAccountByPhone(SpecialTeacherBo bo, Long currentTeacherId, Long previousBoundUserId) {
         if (bo == null || StringUtils.isBlank(bo.getPhone())) {
             return null;
         }
@@ -160,7 +172,10 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
         if (!SpecialIdentitySupport.isPhoneLogin(phone)) {
             throw new ServiceException("请输入正确的手机号");
         }
-        return DataPermissionHelper.ignore(() -> doBindAccount(phone, bo.getInitPassword(), bo.getName(), currentTeacherId));
+        Long userId = DataPermissionHelper.ignore(
+            () -> doBindAccount(phone, bo.getInitPassword(), bo.getName(), currentTeacherId));
+        revokeTeacherRoleIfUserMoved(previousBoundUserId, userId);
+        return userId;
     }
 
     private Long doBindAccount(String phone, String initPassword, String nickName, Long currentTeacherId) {
@@ -202,12 +217,38 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
     }
 
     private boolean hasTeacherRole(Long userId) {
+        return hasRole(userId, SpecialIdentitySupport.TEACHER_ROLE_KEY);
+    }
+
+    private boolean hasParentRole(Long userId) {
+        return hasRole(userId, SpecialIdentitySupport.PARENT_ROLE_KEY);
+    }
+
+    private boolean hasRole(Long userId, String roleKey) {
         List<SysRoleVo> roles = roleService.selectRolesByUserId(userId);
         if (roles == null) {
             return false;
         }
-        return roles.stream().anyMatch(role ->
-            role != null && SpecialIdentitySupport.TEACHER_ROLE_KEY.equals(role.getRoleKey()));
+        return roles.stream().anyMatch(role -> role != null && roleKey.equals(role.getRoleKey()));
+    }
+
+    /**
+     * user_id 换绑后收回旧账号的老师角色，避免无档案的老师登录。
+     * 旧账号仍有家长身份时保留家长；仅老师则只撤老师角色。
+     */
+    private void revokeTeacherRoleIfUserMoved(Long previousUserId, Long newUserId) {
+        if (previousUserId == null || newUserId == null || previousUserId.equals(newUserId)) {
+            return;
+        }
+        if (!hasTeacherRole(previousUserId)) {
+            return;
+        }
+        if (hasParentRole(previousUserId)) {
+            SpecialIdentitySupport.assertKeepAtLeastOneRole(true, false);
+        }
+        userRoleMapper.delete(Wrappers.<SysUserRole>lambdaQuery()
+            .eq(SysUserRole::getUserId, previousUserId)
+            .eq(SysUserRole::getRoleId, resolveTeacherRoleId()));
     }
 
     private Long resolveTeacherRoleId() {
@@ -246,8 +287,17 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
         }
         for (SpecialTeacherVo row : rows) {
             if (row.getUserId() != null) {
-                row.setPhone(phones.get(row.getUserId()));
+                row.setPhone(SpecialParentSupport.maskPhone(phones.get(row.getUserId())));
             }
+        }
+    }
+
+    private void omitLoginPhones(List<SpecialTeacherVo> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return;
+        }
+        for (SpecialTeacherVo row : rows) {
+            row.setPhone(null);
         }
     }
 

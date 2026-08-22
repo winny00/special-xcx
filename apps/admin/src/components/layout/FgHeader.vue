@@ -37,20 +37,7 @@ function onLogout() {
     </div>
     <div class="fg-header__center">
       <div class="fg-header__crumbs">
-        <FgBreadcrumb />
-        <button
-          type="button"
-          class="fg-header__refresh"
-          aria-label="刷新当前页"
-          title="刷新当前页"
-          @click="emit('refresh')"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 12a9 9 0 1 1-3-6.7" />
-            <path d="M21 3v6h-6" />
-          </svg>
-          <span>刷新</span>
-        </button>
+        <FgBreadcrumb @refresh="emit('refresh')" />
       </div>
     </div>
     <div class="fg-header__right">
@@ -81,46 +68,7 @@ function onLogout() {
 }
 
 .fg-header__crumbs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   min-width: 0;
-}
-
-.fg-header__refresh {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-width: 44px;
-  height: 44px;
-  padding: 0 10px;
-  border: 1px solid var(--fg-border);
-  border-radius: var(--fg-radius-sm);
-  background: var(--fg-surface);
-  color: var(--fg-primary);
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-  transition: background-color 180ms ease, border-color 180ms ease;
-}
-
-.fg-header__refresh svg {
-  width: 16px;
-  height: 16px;
-}
-
-.fg-header__refresh:hover,
-.fg-header__refresh:focus-visible {
-  background: var(--fg-primary-soft);
-  border-color: var(--el-color-primary-light-7);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .fg-header__refresh {
-    transition: none;
-  }
 }
 
 .fg-header__right {

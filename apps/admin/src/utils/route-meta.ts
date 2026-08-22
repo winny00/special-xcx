@@ -8,6 +8,17 @@ const RESOURCE_TITLES: Record<string, { title: string; breadcrumb: string[] }> =
   assessment: { title: '评估管理', breadcrumb: ['资源对接', '评估管理'] },
 }
 
+const SKIP_TAB_PATHS = new Set(['/', '/login', '/resource'])
+
+export function shouldRecordTab(route: RouteLocationNormalized): boolean {
+  if (SKIP_TAB_PATHS.has(route.path))
+    return false
+  if (route.path.startsWith('/resource/'))
+    return true
+  const meta = route.meta as { title?: string }
+  return Boolean(meta.title)
+}
+
 export function resolveRouteMeta(route: RouteLocationNormalized) {
   if (route.path.startsWith('/resource/')) {
     const type = route.params.type as string

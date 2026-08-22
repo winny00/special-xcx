@@ -6,6 +6,14 @@ export interface TabItem {
 
 const DASHBOARD_PATH = '/dashboard'
 
+export function isPhantomAdminTab(tab: TabItem): boolean {
+  return tab.path === '/' || tab.title === '特教管理后台'
+}
+
+export function prunePhantomTabs(tabs: TabItem[]): TabItem[] {
+  return tabs.filter(tab => !isPhantomAdminTab(tab))
+}
+
 export function upsertTab(tabs: TabItem[], tab: TabItem): TabItem[] {
   const exists = tabs.some(t => t.path === tab.path)
   if (exists)

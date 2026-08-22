@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import type { RouteLocationNormalized } from 'vue-router'
 import { ref } from 'vue'
-import { tabFromRoute } from '@/utils/route-meta'
-import { removeTab, upsertTab, type TabItem } from '@/utils/tab-nav'
+import { shouldRecordTab, tabFromRoute } from '@/utils/route-meta'
+import { prunePhantomTabs, removeTab, upsertTab, type TabItem } from '@/utils/tab-nav'
 
 export const useTabsStore = defineStore('tabs', () => {
   const tabs = ref<TabItem[]>([{ path: '/dashboard', title: '数据概览', closable: false }])
@@ -10,6 +10,9 @@ export const useTabsStore = defineStore('tabs', () => {
 
   function syncRoute(route: RouteLocationNormalized) {
     if (route.path === '/login')
+      return
+    tabs.value = prunePhantomTabs(tabs.value)
+    if (!shouldRecordTab(route))
       return
     const tab = tabFromRoute(route)
     tabs.value = upsertTab(tabs.value, tab)

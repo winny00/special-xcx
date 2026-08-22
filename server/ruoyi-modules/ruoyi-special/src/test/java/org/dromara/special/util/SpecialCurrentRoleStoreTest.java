@@ -36,8 +36,10 @@ class SpecialCurrentRoleStoreTest {
     void resolveForGetInfoKeepsSessionAndFillsWithoutClientKey() {
         assertEquals("special_parent", SpecialCurrentRoleStore.resolveForGetInfo(
             "special_parent", Set.of("special_parent", "special_teacher")));
-        assertEquals("special_teacher", SpecialCurrentRoleStore.resolveForGetInfo(
+        assertEquals("special_parent", SpecialCurrentRoleStore.resolveForGetInfo(
             null, Set.of("special_parent", "special_teacher")));
+        assertEquals("special_teacher", SpecialCurrentRoleStore.resolveForGetInfo(
+            null, Set.of("special_teacher")));
         assertEquals("special_parent", SpecialCurrentRoleStore.resolveForGetInfo(
             "", Set.of("special_parent")));
         assertNull(SpecialCurrentRoleStore.resolveForGetInfo(null, Set.of("superadmin")));

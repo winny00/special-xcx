@@ -69,19 +69,6 @@ public final class SpecialIdentitySupport {
         return roleKeys.contains(SUPERADMIN_ROLE_KEY) || roleKeys.contains(TEACHER_ROLE_KEY);
     }
 
-    /**
-     * getInfo 会话空时选用的 clientId。不把 LoginUser.clientKey 映射成 UUID。
-     */
-    public static String clientIdForEmptyCurrentRole(Set<String> roleKeys) {
-        if (canAccessPcAdmin(roleKeys)
-            && roleKeys != null
-            && roleKeys.contains(TEACHER_ROLE_KEY)
-            && !roleKeys.contains(SUPERADMIN_ROLE_KEY)) {
-            return PC_CLIENT_ID;
-        }
-        return XCX_CLIENT_ID;
-    }
-
     public static void assertKeepAtLeastOneRole(boolean parent, boolean teacher) {
         if (!parent && !teacher) {
             throw new IllegalArgumentException("至少保留一个角色");

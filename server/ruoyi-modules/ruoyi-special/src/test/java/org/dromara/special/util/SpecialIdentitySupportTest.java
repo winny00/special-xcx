@@ -47,20 +47,6 @@ class SpecialIdentitySupportTest {
     }
 
     @Test
-    void emptySessionClientIdIsPcOnlyForNonSuperadminTeacher() {
-        assertEquals(SpecialIdentitySupport.PC_CLIENT_ID,
-            SpecialIdentitySupport.clientIdForEmptyCurrentRole(Set.of("special_teacher")));
-        assertEquals(SpecialIdentitySupport.PC_CLIENT_ID,
-            SpecialIdentitySupport.clientIdForEmptyCurrentRole(Set.of("special_parent", "special_teacher")));
-        assertEquals(SpecialIdentitySupport.XCX_CLIENT_ID,
-            SpecialIdentitySupport.clientIdForEmptyCurrentRole(Set.of("superadmin")));
-        assertEquals(SpecialIdentitySupport.XCX_CLIENT_ID,
-            SpecialIdentitySupport.clientIdForEmptyCurrentRole(Set.of("superadmin", "special_teacher")));
-        assertEquals(SpecialIdentitySupport.XCX_CLIENT_ID,
-            SpecialIdentitySupport.clientIdForEmptyCurrentRole(Set.of("special_parent")));
-    }
-
-    @Test
     void pcAccess() {
         assertTrue(SpecialIdentitySupport.canAccessPcAdmin(Set.of("superadmin")));
         assertTrue(SpecialIdentitySupport.canAccessPcAdmin(Set.of("special_teacher", "special_parent")));

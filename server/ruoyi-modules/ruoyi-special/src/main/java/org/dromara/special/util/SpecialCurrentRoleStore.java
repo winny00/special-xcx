@@ -63,14 +63,14 @@ public final class SpecialCurrentRoleStore {
     }
 
     /**
-     * getInfo：有会话角色则沿用；空则按老师/非超管选 PC client，否则 xcx，再走 {@link #pickRoleForLogin}。
-     * 不把 {@code LoginUser.clientKey} 映射成 client UUID。
+     * getInfo：有会话角色则沿用；空则走 spec 默认（家长优先，否则老师）。
+     * 不知道登录端，不能按「有老师」当成 PC。
      */
     public static String resolveForGetInfo(String sessionRole, Set<String> roleKeys) {
         if (sessionRole != null && !sessionRole.isBlank()) {
             return sessionRole;
         }
-        return pickRoleForLogin(SpecialIdentitySupport.clientIdForEmptyCurrentRole(roleKeys), roleKeys);
+        return SpecialIdentitySupport.defaultCurrentRole(roleKeys);
     }
 
     /**

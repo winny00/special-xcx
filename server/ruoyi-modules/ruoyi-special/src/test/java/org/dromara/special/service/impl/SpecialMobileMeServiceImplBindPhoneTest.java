@@ -44,6 +44,7 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,7 +52,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -68,6 +68,7 @@ class SpecialMobileMeServiceImplBindPhoneTest {
     private static final String PHONE = "13800138000";
     private static final String SMS_CODE = "1234";
     private static final String TOKEN = "keep-token";
+    private static final String OLD_TOKEN = "temp-token";
 
     @Mock
     private ISysUserService userService;
@@ -318,7 +319,12 @@ class SpecialMobileMeServiceImplBindPhoneTest {
              MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
             helper.when(LoginHelper::getUserId).thenReturn(CURRENT_USER_ID);
             helper.when(LoginHelper::getLoginUser).thenReturn(null);
-            stp.when(StpUtil::getTokenValue).thenReturn(TOKEN);
+            AtomicBoolean loggedIn = new AtomicBoolean(false);
+            helper.when(() -> LoginHelper.login(any(), any())).thenAnswer(inv -> {
+                loggedIn.set(true);
+                return null;
+            });
+            stp.when(StpUtil::getTokenValue).thenAnswer(inv -> loggedIn.get() ? TOKEN : OLD_TOKEN);
             stp.when(StpUtil::getTokenTimeout).thenReturn(3600L);
             stp.when(() -> StpUtil.getExtra(LoginHelper.CLIENT_KEY)).thenReturn(SpecialIdentitySupport.XCX_CLIENT_ID);
             stp.when(StpUtil::getTokenSession).thenReturn(session);
@@ -327,6 +333,7 @@ class SpecialMobileMeServiceImplBindPhoneTest {
 
             verify(userService).updateUserStatus(CURRENT_USER_ID, SystemConstants.DISABLE);
             stp.verify(StpUtil::logout, never());
+            stp.verify(() -> StpUtil.logoutByTokenValue(any()), never());
             helper.verify(() -> LoginHelper.login(any(), any()), never());
 
             List<TransactionSynchronization> syncs =
@@ -335,7 +342,8 @@ class SpecialMobileMeServiceImplBindPhoneTest {
             for (TransactionSynchronization sync : syncs) {
                 sync.afterCommit();
             }
-            stp.verify(StpUtil::logout);
+            stp.verify(StpUtil::logout, never());
+            stp.verify(() -> StpUtil.logoutByTokenValue(OLD_TOKEN));
             assertEquals(TOKEN, vo.getAccessToken());
             assertEquals(3600L, vo.getExpireIn());
             assertEquals(SpecialIdentitySupport.XCX_CLIENT_ID, vo.getClientId());
@@ -344,6 +352,76 @@ class SpecialMobileMeServiceImplBindPhoneTest {
                 TransactionSynchronizationManager.clearSynchronization();
             }
         }
+    }
+
+    @Test
+    void doesNotRevokeOldTokenWhenKeepLoginThrows() {
+        stubMergeToPhoneOwner();
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            helper.when(LoginHelper::getUserId).thenReturn(CURRENT_USER_ID);
+            helper.when(LoginHelper::getLoginUser).thenReturn(null);
+            helper.when(() -> LoginHelper.login(any(), any())).thenThrow(new RuntimeException("keep login failed"));
+            stp.when(StpUtil::getTokenValue).thenReturn(OLD_TOKEN);
+            stp.when(StpUtil::getTokenTimeout).thenReturn(3600L);
+            stp.when(() -> StpUtil.getExtra(LoginHelper.CLIENT_KEY)).thenReturn(SpecialIdentitySupport.XCX_CLIENT_ID);
+            stp.when(StpUtil::getTokenSession).thenReturn(mock(SaSession.class));
+
+            RuntimeException ex = assertThrows(RuntimeException.class, () -> service.bindPhone(body));
+            assertEquals("keep login failed", ex.getMessage());
+            stp.verify(StpUtil::logout, never());
+            stp.verify(() -> StpUtil.logoutByTokenValue(any()), never());
+        }
+    }
+
+    @Test
+    void revokesOldTokenOnlyAfterKeepLoginSucceeds() {
+        stubMergeToPhoneOwner();
+        List<String> calls = new ArrayList<>();
+        AtomicBoolean loggedIn = new AtomicBoolean(false);
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class);
+             MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            helper.when(LoginHelper::getUserId).thenReturn(CURRENT_USER_ID);
+            helper.when(LoginHelper::getLoginUser).thenReturn(null);
+            helper.when(() -> LoginHelper.login(any(), any())).thenAnswer(inv -> {
+                calls.add("login");
+                loggedIn.set(true);
+                return null;
+            });
+            stp.when(StpUtil::getTokenValue).thenAnswer(inv -> loggedIn.get() ? TOKEN : OLD_TOKEN);
+            stp.when(StpUtil::getTokenTimeout).thenReturn(3600L);
+            stp.when(() -> StpUtil.getExtra(LoginHelper.CLIENT_KEY)).thenReturn(SpecialIdentitySupport.XCX_CLIENT_ID);
+            stp.when(StpUtil::getTokenSession).thenReturn(mock(SaSession.class));
+            stp.when(StpUtil::logout).thenAnswer(inv -> {
+                calls.add("logout");
+                return null;
+            });
+            stp.when(() -> StpUtil.logoutByTokenValue(OLD_TOKEN)).thenAnswer(inv -> {
+                calls.add("logoutByTokenValue");
+                return null;
+            });
+
+            SpecialBindPhoneVo vo = service.bindPhone(body);
+
+            assertEquals(List.of("login", "logoutByTokenValue"), calls);
+            assertEquals(TOKEN, vo.getAccessToken());
+            stp.verify(StpUtil::logout, never());
+            stp.verify(() -> StpUtil.logoutByTokenValue(OLD_TOKEN));
+        }
+    }
+
+    private void stubMergeToPhoneOwner() {
+        when(userService.selectUserById(CURRENT_USER_ID)).thenReturn(currentUser(null));
+        when(userService.selectUserByPhoneNumber(PHONE)).thenReturn(phoneOwner());
+        when(socialService.queryListByUserId(CURRENT_USER_ID)).thenReturn(List.of(currentSocial()));
+        when(socialService.selectByAuthId("WECHAT_MINI_PROGRAMoid-current")).thenReturn(List.of(currentSocial()));
+        when(roleService.selectRolesByUserId(PHONE_OWNER_ID)).thenReturn(List.of());
+        when(roleService.selectRoleAll()).thenReturn(List.of(parentRole()));
+        when(userService.selectUserById(PHONE_OWNER_ID)).thenReturn(phoneOwner());
+        when(permissionService.getMenuPermission(PHONE_OWNER_ID)).thenReturn(java.util.Set.of());
+        when(permissionService.getRolePermission(PHONE_OWNER_ID)).thenReturn(java.util.Set.of("special_parent"));
+        when(clientService.queryByClientId(SpecialIdentitySupport.XCX_CLIENT_ID)).thenReturn(xcxClient());
+        when(appointmentMapper.selectList(any())).thenReturn(List.of());
     }
 
     private static SysUserVo currentUser(String phone) {

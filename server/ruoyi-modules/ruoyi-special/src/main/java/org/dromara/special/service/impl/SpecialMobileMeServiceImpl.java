@@ -1,5 +1,6 @@
 package org.dromara.special.service.impl;
 
+import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.stp.parameter.SaLoginParameter;
 import cn.hutool.core.bean.BeanUtil;
@@ -343,16 +344,30 @@ public class SpecialMobileMeServiceImpl implements ISpecialMobileMeService {
         }
         LoginUser loginUser = buildKeepLoginUser(keep, client, movedOpenid(keepUserId));
         SpecialBindPhoneVo vo = new SpecialBindPhoneVo();
-        runAfterCommit(() -> {
-            StpUtil.logout();
-            LoginHelper.login(loginUser, loginParameter(client, clientId));
-            SpecialCurrentRoleStore.write(
-                SpecialCurrentRoleStore.requireRoleForLogin(clientId, loginUser.getRolePermission()));
-            vo.setAccessToken(StpUtil.getTokenValue());
-            vo.setExpireIn(StpUtil.getTokenTimeout());
-            vo.setClientId(clientId);
-        });
+        runAfterCommit(() -> switchToKeepUser(loginUser, client, clientId, vo));
         return vo;
+    }
+
+    private void switchToKeepUser(LoginUser loginUser, SysClientVo client, String clientId, SpecialBindPhoneVo vo) {
+        String oldToken = StpUtil.getTokenValue();
+        LoginHelper.login(loginUser, loginParameter(client, clientId));
+        SpecialCurrentRoleStore.write(
+            SpecialCurrentRoleStore.requireRoleForLogin(clientId, loginUser.getRolePermission()));
+        vo.setAccessToken(StpUtil.getTokenValue());
+        vo.setExpireIn(StpUtil.getTokenTimeout());
+        vo.setClientId(clientId);
+        revokeReplacedToken(oldToken, vo.getAccessToken());
+    }
+
+    private void revokeReplacedToken(String oldToken, String newToken) {
+        if (StringUtils.isBlank(oldToken) || oldToken.equals(newToken)) {
+            return;
+        }
+        try {
+            StpUtil.logoutByTokenValue(oldToken);
+        } catch (NotLoginException ignored) {
+            // Old session may already be gone; keep-user token is already issued.
+        }
     }
 
     private void runAfterCommit(Runnable action) {

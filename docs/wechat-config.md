@@ -62,14 +62,13 @@ special:
 | 管理后台 | http://8.134.110.218/login |
 | API 示例 | http://8.134.110.218/special/mobile/resource/list |
 | H5 家长端 | http://8.134.110.218/h5/ |
-| Jenkins | http://8.134.110.218/jenkins/（需登录） |
 
-**CI/CD（Jenkins）**
+**CI/CD（GitHub Actions）**
 
 - 仓库：GitHub 私有 `special-xcx`
-- 自动 Job：push `main` 且改 `server/`、`apps/admin/`、`apps/mobile/` 分别触发
-- 小程序上传 Job `special-mp-weixin` 仅手动触发
-- 设计文档：`docs/superpowers/specs/2026-08-19-jenkins-github-cicd-design.md`
+- push `main`：改 `server/` → Deploy server；改 `apps/admin/` → Deploy admin；改 `apps/mobile/` → Deploy H5
+- 一键：Actions → Deploy ECS（后端 + 管理后台 + H5）
+- 微信小程序仍在开发者工具上传 / 公众平台提审，不走 CI
 
 **Mac 一键安全加固**（改 admin/MySQL/Redis 密码、日志轮转、每日备份）：
 

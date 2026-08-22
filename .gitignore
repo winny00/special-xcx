@@ -1,7 +1,7 @@
 node_modules/
 dist/
 
-# Jenkins `npm ci` needs this; some global gitignores exclude package-lock.json
+# Admin `npm ci` in GitHub Actions; some global gitignores exclude package-lock.json
 !apps/admin/package-lock.json
 
 unpackage/
@@ -13,14 +13,12 @@ unpackage/
 .superpowers/
 .worktrees/
 
-# 微信 CI 上传私钥（仅 Jenkins Credentials）
+# 微信上传私钥（不进 Git）
 apps/mobile/private*.key
 apps/mobile/private.key
 
-# 移动端生产 env（Jenkins 构建时写入）
+# 移动端生产 env（CI 用 example 生成，不提交）
 apps/mobile/env/.env.production
 !apps/mobile/env/.env.production.example
 
-# Jenkins 本地缓存
-.jenkins/
 apps/admin/.ci-lock-hash

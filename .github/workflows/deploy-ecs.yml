@@ -1,4 +1,4 @@
-# 一键部署 ECS：后端 + 管理后台（GitHub Actions 云上构建，不在 ECS 跑 Maven/npm）
+# 一键部署 ECS：后端 + 管理后台 + H5（GitHub Actions 云上构建）
 #
 # 使用前在 GitHub 仓库 Settings → Secrets and variables → Actions 配置：
 #   ECS_HOST       例：8.134.110.218
@@ -34,4 +34,9 @@ jobs:
   deploy-admin:
     needs: deploy-server
     uses: ./.github/workflows/deploy-admin.yml
+    secrets: inherit
+
+  deploy-h5:
+    needs: deploy-server
+    uses: ./.github/workflows/deploy-h5.yml
     secrets: inherit

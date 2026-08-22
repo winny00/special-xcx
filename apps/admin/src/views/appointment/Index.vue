@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   listAppointments,
@@ -7,6 +8,8 @@ import {
   type SpecialAppointment,
 } from '@/api/special'
 
+const route = useRoute()
+const router = useRouter()
 const loading = ref(false)
 const tableData = ref<SpecialAppointment[]>([])
 const total = ref(0)
@@ -16,7 +19,13 @@ const pageSize = ref(10)
 const query = reactive({
   contactName: '',
   appointStatus: '' as number | '',
+  userId: '',
 })
+
+function syncUserIdFromRoute() {
+  const uid = route.query.userId
+  query.userId = typeof uid === 'string' ? uid : ''
+}
 
 const statusMap: Record<number, string> = {
   0: '待处理',
@@ -47,6 +56,7 @@ async function fetchList() {
       pageSize: pageSize.value,
       contactName: query.contactName || undefined,
       appointStatus: query.appointStatus === '' ? undefined : query.appointStatus,
+      userId: query.userId || undefined,
     })
     tableData.value = res.rows
     total.value = res.total
@@ -63,6 +73,11 @@ function handleQuery() {
 function handleReset() {
   query.contactName = ''
   query.appointStatus = ''
+  query.userId = ''
+  if (route.query.userId) {
+    router.replace({ path: '/appointment' })
+    return
+  }
   handleQuery()
 }
 
@@ -77,12 +92,24 @@ function handlePageChange(page: number) {
   fetchList()
 }
 
-onMounted(fetchList)
+watch(() => route.query.userId, () => {
+  syncUserIdFromRoute()
+  pageNum.value = 1
+  fetchList()
+})
+
+onMounted(() => {
+  syncUserIdFromRoute()
+  fetchList()
+})
 </script>
 
 <template>
   <div>
     <div class="search-card">
+      <el-tag v-if="query.userId" type="success" effect="light" closable @close="handleReset">
+        已按家长筛选
+      </el-tag>
       <el-input v-model="query.contactName" clearable placeholder="联系人" style="width: 220px" @keyup.enter="handleQuery" />
       <el-select v-model="query.appointStatus" clearable placeholder="状态" style="width: 140px">
         <el-option v-for="opt in statusOptions" :key="opt.value" :label="opt.label" :value="opt.value" />

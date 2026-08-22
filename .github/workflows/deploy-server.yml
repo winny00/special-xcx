@@ -19,6 +19,7 @@ on:
     paths:
       - 'server/**'
       - 'scripts/ecs/migrate-phase2a.sql'
+      - 'scripts/ecs/migrate-phase2b-parent.sql'
       - 'scripts/ecs/nginx-special.conf'
       - 'scripts/ecs/deploy-server.sh'
       - '.github/workflows/deploy-server.yml'
@@ -97,7 +98,7 @@ jobs:
           echo "key_file=${KEY_FILE}" >> "$GITHUB_OUTPUT"
           echo "SSH target ${ECS_USERNAME}@${ECS_HOST}"
 
-      - name: Run DB migrations (phase2a)
+      - name: Run DB migrations (phase2a / phase2b parent CRM)
         if: |
           github.event_name == 'push' ||
           (github.event_name == 'workflow_dispatch' && inputs.run_migrations != false) ||
@@ -109,7 +110,9 @@ jobs:
         run: |
           set -euo pipefail
           scp -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-            scripts/ecs/migrate-phase2a.sql "${ECS_USERNAME}@${ECS_HOST}:/tmp/migrate-phase2a.sql"
+            scripts/ecs/migrate-phase2a.sql \
+            scripts/ecs/migrate-phase2b-parent.sql \
+            "${ECS_USERNAME}@${ECS_HOST}:/tmp/"
           ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
             "${ECS_USERNAME}@${ECS_HOST}" 'bash -s' <<'REMOTE'
           set -euo pipefail
@@ -122,8 +125,9 @@ jobs:
           fi
           MYSQL_PWD="${MYSQL_ROOT_PASSWORD:-${DB_PASSWORD:-root}}"
           mysql -uroot -p"$MYSQL_PWD" "$DB_NAME" < /tmp/migrate-phase2a.sql
-          rm -f /tmp/migrate-phase2a.sql
-          echo "phase2a migrations applied"
+          mysql -uroot -p"$MYSQL_PWD" "$DB_NAME" < /tmp/migrate-phase2b-parent.sql
+          rm -f /tmp/migrate-phase2a.sql /tmp/migrate-phase2b-parent.sql
+          echo "phase2a and parent CRM migrations applied"
           REMOTE
 
       - name: Deploy jar and restart backend

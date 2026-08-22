@@ -79,6 +79,7 @@ onMounted(loadStats)
         <router-link to="/resource/assessment">评估管理</router-link>
         <router-link to="/organization">机构管理</router-link>
         <router-link to="/appointment">预约管理</router-link>
+        <router-link to="/parent">家长管理</router-link>
         <router-link to="/audit">审核中心</router-link>
       </div>
     </div>

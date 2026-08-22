@@ -1,0 +1,4 @@
+-- phase2b 家长 CRM 菜单增量（可重复执行，兼容 MySQL 5.7+）
+INSERT INTO sys_menu VALUES (1764000000000000007, '家长管理', 1764000000000000001, 4, 'parent', 'special/parent/index', '', 'N', 'Y', 'C', '0', '0', 'special:parent:list', 'user', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '家长管理';
+INSERT INTO sys_menu VALUES (1764000000000000061, '家长查询', 1764000000000000007, 1, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:parent:query', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '家长查询';
+INSERT INTO sys_menu VALUES (1764000000000000062, '家长列表', 1764000000000000007, 2, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:parent:list', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '家长列表';

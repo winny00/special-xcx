@@ -39,7 +39,7 @@ export interface SpecialAppointment {
   id?: number
   resourceId?: number
   resourceTitle?: string
-  userId?: number
+  userId?: string
   contactName?: string
   contactPhone?: string
   childAge?: number
@@ -164,4 +164,25 @@ export function updateArticle(data: SpecialArticle) {
 
 export function deleteArticles(ids: number[]) {
   return request.delete(`/special/article/${ids.join(',')}`)
+}
+
+export interface SpecialParent {
+  userId: string
+  nickName?: string
+  phone?: string
+  createTime?: string
+  appointmentCount?: number
+}
+
+export interface SpecialParentDetail extends SpecialParent {
+  avatar?: string
+  appointments?: SpecialAppointment[]
+}
+
+export function listParents(params?: ListQuery) {
+  return request.get<PageResult<SpecialParent>>('/special/parent/list', { params })
+}
+
+export function getParent(userId: string) {
+  return request.get<SpecialParentDetail>(`/special/parent/${userId}`)
 }

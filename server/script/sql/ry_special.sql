@@ -165,6 +165,11 @@ INSERT INTO sys_menu VALUES (1764000000000000052, '资讯新增', 17640000000000
 INSERT INTO sys_menu VALUES (1764000000000000053, '资讯修改', 1764000000000000006, 3, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:article:edit', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '资讯修改';
 INSERT INTO sys_menu VALUES (1764000000000000054, '资讯删除', 1764000000000000006, 4, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:article:remove', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '资讯删除';
 
+-- phase2b-parent-crm: 家长管理（只读）
+INSERT INTO sys_menu VALUES (1764000000000000007, '家长管理', 1764000000000000001, 4, 'parent', 'special/parent/index', '', 'N', 'Y', 'C', '0', '0', 'special:parent:list', 'user', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '家长管理';
+INSERT INTO sys_menu VALUES (1764000000000000061, '家长查询', 1764000000000000007, 1, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:parent:query', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '家长查询';
+INSERT INTO sys_menu VALUES (1764000000000000062, '家长列表', 1764000000000000007, 2, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:parent:list', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '家长列表';
+
 INSERT INTO special_article VALUES
 (1768000000000000001, '广东省特殊教育提升计划解读', '梳理省内特教资源布局与入学支持政策要点。', '<p>本文介绍广东省特殊教育提升计划的核心目标：扩大特教学位供给、加强融合教育支持、完善评估与转衔服务。</p><p>家长可关注当地教育局发布的入学指南与康复补贴申请渠道。</p>', null, 'policy', 1, sysdate(), 128, 1761000000000000103, 1761100000000000001, sysdate(), null, null, '0'),
 (1768000000000000002, '自闭症儿童家庭支持服务指南', '为新手家长整理评估、干预与社区资源对接路径。', '<p>建议家长优先完成发育评估，再根据评估结果选择感统、语言或行为干预课程。</p><p>本平台可预约咨询，对接机构与老师资源。</p>', null, 'guide', 1, sysdate(), 86, 1761000000000000103, 1761100000000000001, sysdate(), null, null, '0'),

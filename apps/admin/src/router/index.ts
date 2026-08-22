@@ -57,6 +57,12 @@ const router = createRouter({
       meta: { title: '预约管理', breadcrumb: ['预约管理'] },
     },
     {
+      path: '/parent',
+      name: 'Parent',
+      component: () => import('@/views/parent/Index.vue'),
+      meta: { title: '家长管理', breadcrumb: ['家长管理'] },
+    },
+    {
       path: '/audit',
       name: 'Audit',
       component: () => import('@/views/audit/Index.vue'),

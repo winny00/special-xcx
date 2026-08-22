@@ -1,10 +1,17 @@
 <script lang="ts" setup>
+import { computed, ref, watch } from 'vue'
 import type { ISpecialResource } from '@/api/types/special'
 import { RESOURCE_TYPE_MAP } from '@/api/types/special'
 
 const props = defineProps<{
   item: ISpecialResource
 }>()
+
+const coverFailed = ref(false)
+watch(() => props.item.coverUrl, () => {
+  coverFailed.value = false
+})
+const showCover = computed(() => Boolean(props.item.coverUrl) && !coverFailed.value)
 
 const TYPE_CHAR: Record<string, string> = {
   course: 'è¯¾',
@@ -31,16 +38,17 @@ const priceText = computed(() => (props.item.price && props.item.price > 0) ? `Â
 <template>
   <view class="fg-resource-card fg-surface-card fg-tap-active flex overflow-hidden">
     <image
-      v-if="item.coverUrl"
+      v-if="showCover"
       :src="item.coverUrl"
       mode="aspectFill"
-      class="h-full w-64px shrink-0"
-      style="min-height: 88px"
+      class="cover-image shrink-0"
+      style="width: 88px; height: 88px"
+      @error="coverFailed = true"
     />
     <view
       v-else
-      class="flex w-64px shrink-0 items-center justify-center text-xl font-medium text-white"
-      :style="{ backgroundColor: bg, minHeight: '88px' }"
+      class="cover-fallback"
+      :style="{ backgroundColor: bg, width: '88px', height: '88px' }"
     >
       {{ char }}
     </view>
@@ -63,3 +71,20 @@ const priceText = computed(() => (props.item.price && props.item.price > 0) ? `Â
     </view>
   </view>
 </template>
+
+<style scoped lang="scss">
+.cover-image,
+.cover-fallback {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+}
+.cover-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 500;
+  color: #fff;
+}
+</style>

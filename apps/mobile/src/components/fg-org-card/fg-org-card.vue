@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import type { ISpecialOrganization } from '@/api/types/special'
 
 const props = defineProps<{
@@ -6,22 +7,28 @@ const props = defineProps<{
   typeLabel: string
 }>()
 
+const coverFailed = ref(false)
+watch(() => props.org.coverUrl, () => {
+  coverFailed.value = false
+})
+const showCover = computed(() => Boolean(props.org.coverUrl) && !coverFailed.value)
 const initialChar = computed(() => (props.org.name || '机').slice(0, 1))
 </script>
 
 <template>
   <view class="fg-org-card fg-surface-card fg-tap-active flex overflow-hidden">
     <image
-      v-if="org.coverUrl"
+      v-if="showCover"
       :src="org.coverUrl"
       mode="aspectFill"
-      class="h-full w-64px shrink-0"
-      style="min-height: 88px"
+      class="cover-image shrink-0"
+      style="width: 88px; height: 88px"
+      @error="coverFailed = true"
     />
     <view
       v-else
-      class="flex w-64px shrink-0 items-center justify-center text-xl font-medium text-white"
-      style="min-height: 88px; background-color: #1B7F6B"
+      class="cover-fallback"
+      style="width: 88px; height: 88px; background-color: #1B7F6B"
     >
       {{ initialChar }}
     </view>
@@ -50,6 +57,20 @@ const initialChar = computed(() => (props.org.name || '机').slice(0, 1))
 </template>
 
 <style scoped lang="scss">
+.cover-image,
+.cover-fallback {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+}
+.cover-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 500;
+  color: #fff;
+}
 .type-tag {
   padding: 2px 10px;
   border-radius: 999px;

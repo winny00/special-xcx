@@ -41,6 +41,12 @@ public class SpecialTeacherController extends BaseController {
     }
 
     @SaCheckPermission("special:teacher:query")
+    @GetMapping("/me")
+    public R<SpecialTeacherVo> me() {
+        return R.ok(specialTeacherService.queryOwn());
+    }
+
+    @SaCheckPermission("special:teacher:query")
     @GetMapping("/{id}")
     public R<SpecialTeacherVo> getInfo(@NotNull(message = "主键不能为空") @PathVariable("id") Long id) {
         return R.ok(specialTeacherService.queryById(id));

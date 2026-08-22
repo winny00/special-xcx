@@ -50,13 +50,16 @@ INSERT INTO sys_menu VALUES (1764000000000000009, '用户角色', 17640000000000
 INSERT INTO sys_menu VALUES (1764000000000000081, '用户角色查询', 1764000000000000009, 1, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:account:list', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '用户角色查询';
 INSERT INTO sys_menu VALUES (1764000000000000082, '用户角色编辑', 1764000000000000009, 2, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:account:edit', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '用户角色编辑';
 
--- 给 special_teacher 挂老师档案查询/修改 + 预约列表/查询/处理。不挂 account/resource/org/parent/audit
+-- 给 special_teacher 挂老师档案查询/修改/列表 + 预约列表/查询/处理。不挂 account/resource/org/parent/audit
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT 1763000000000000002, 1764000000000000071 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1763000000000000002 AND menu_id = 1764000000000000071);
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT 1763000000000000002, 1764000000000000073 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1763000000000000002 AND menu_id = 1764000000000000073);
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT 1763000000000000002, 1764000000000000075 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1763000000000000002 AND menu_id = 1764000000000000075);
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT 1763000000000000002, 1764000000000000004 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1763000000000000002 AND menu_id = 1764000000000000004);

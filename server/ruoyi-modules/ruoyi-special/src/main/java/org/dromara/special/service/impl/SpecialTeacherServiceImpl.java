@@ -57,12 +57,28 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
     @Override
     public SpecialTeacherVo queryById(Long id) {
         SpecialTeacherVo vo = baseMapper.selectVoById(id);
+        assertOwnsTeacher(vo == null ? null : vo.getUserId());
         fillBoundPhones(vo == null ? List.of() : List.of(vo));
         return vo;
     }
 
     @Override
+    public SpecialTeacherVo queryOwn() {
+        Long userId = LoginHelper.getUserId();
+        SpecialTeacherVo vo = baseMapper.selectVoOne(
+            Wrappers.<SpecialTeacher>lambdaQuery().eq(SpecialTeacher::getUserId, userId),
+            false);
+        if (vo == null) {
+            throw new ServiceException("老师档案不存在");
+        }
+        assertOwnsTeacher(vo.getUserId());
+        fillBoundPhones(List.of(vo));
+        return vo;
+    }
+
+    @Override
     public PageResult<SpecialTeacherVo> queryPageList(SpecialTeacherBo bo, PageQuery pageQuery) {
+        applySelfUserId(bo);
         Page<SpecialTeacherVo> result = baseMapper.selectVoPage(pageQuery.build(), buildQueryWrapper(bo));
         fillBoundPhones(result.getRecords());
         return PageResult.build(result.getRecords(), result.getTotal());
@@ -70,6 +86,7 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
 
     @Override
     public List<SpecialTeacherVo> queryList(SpecialTeacherBo bo) {
+        applySelfUserId(bo);
         List<SpecialTeacherVo> rows = baseMapper.selectVoList(buildQueryWrapper(bo));
         fillBoundPhones(rows);
         return rows;
@@ -98,6 +115,7 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean insertByBo(SpecialTeacherBo bo) {
+        rejectTeacherOnlyMutation();
         SpecialTeacher add = MapstructUtils.convert(bo, SpecialTeacher.class);
         if (add.getStatus() == null) {
             add.setStatus(SpecialAuditSupport.PENDING);
@@ -113,12 +131,11 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateByBo(SpecialTeacherBo bo) {
+        SpecialTeacher current = bo.getId() == null ? null : baseMapper.selectById(bo.getId());
+        assertOwnsTeacher(current == null ? null : current.getUserId());
+        rejectTeacherAuditChange(current, bo);
         SpecialTeacher update = MapstructUtils.convert(bo, SpecialTeacher.class);
-        Long previousUserId = null;
-        if (bo.getId() != null) {
-            SpecialTeacher current = baseMapper.selectById(bo.getId());
-            previousUserId = current == null ? null : current.getUserId();
-        }
+        Long previousUserId = current == null ? null : current.getUserId();
         Long boundUserId = bindAccountByPhone(bo, bo.getId(), previousUserId);
         if (boundUserId != null) {
             update.setUserId(boundUserId);
@@ -128,6 +145,7 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
 
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
+        rejectTeacherOnlyMutation();
         if (isValid) {
             List<SpecialTeacher> list = baseMapper.selectByIds(ids);
             if (list.size() != ids.size()) {
@@ -139,6 +157,7 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
 
     @Override
     public Boolean audit(SpecialAuditBo bo) {
+        rejectTeacherOnlyMutation();
         SpecialAuditSupport.requireRemarkWhenReject(bo.getStatus(), bo.getRemark());
         Long auditor = LoginHelper.getUserId();
         LocalDateTime now = LocalDateTime.now();
@@ -305,9 +324,39 @@ public class SpecialTeacherServiceImpl implements ISpecialTeacherService {
         LambdaQueryWrapper<SpecialTeacher> lqw = Wrappers.lambdaQuery();
         lqw.like(StringUtils.isNotBlank(bo.getName()), SpecialTeacher::getName, bo.getName());
         lqw.like(StringUtils.isNotBlank(bo.getSpecialties()), SpecialTeacher::getSpecialties, bo.getSpecialties());
+        lqw.eq(bo.getUserId() != null, SpecialTeacher::getUserId, bo.getUserId());
         lqw.eq(bo.getOrgId() != null, SpecialTeacher::getOrgId, bo.getOrgId());
         lqw.eq(bo.getStatus() != null, SpecialTeacher::getStatus, bo.getStatus());
         lqw.orderByDesc(SpecialTeacher::getCreateTime);
         return lqw;
+    }
+
+    private void applySelfUserId(SpecialTeacherBo bo) {
+        if (SpecialIdentitySupport.currentUserIsTeacherOnly()) {
+            bo.setUserId(LoginHelper.getUserId());
+        }
+    }
+
+    private void assertOwnsTeacher(Long rowUserId) {
+        boolean teacherOnly = SpecialIdentitySupport.currentUserIsTeacherOnly();
+        boolean owning = rowUserId != null && rowUserId.equals(LoginHelper.getUserId());
+        SpecialIdentitySupport.assertTeacherOwns(teacherOnly, owning);
+    }
+
+    private void rejectTeacherAuditChange(SpecialTeacher current, SpecialTeacherBo bo) {
+        if (!SpecialIdentitySupport.currentUserIsTeacherOnly() || current == null || bo == null) {
+            return;
+        }
+        if (bo.getStatus() != null && !bo.getStatus().equals(current.getStatus())) {
+            throw new ServiceException("没有权限访问");
+        }
+        bo.setStatus(current.getStatus());
+        bo.setUserId(current.getUserId());
+    }
+
+    private void rejectTeacherOnlyMutation() {
+        if (SpecialIdentitySupport.currentUserIsTeacherOnly()) {
+            throw new ServiceException("没有权限访问");
+        }
     }
 }

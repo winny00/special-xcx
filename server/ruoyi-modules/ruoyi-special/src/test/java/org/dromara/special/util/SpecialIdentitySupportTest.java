@@ -54,6 +54,25 @@ class SpecialIdentitySupportTest {
     }
 
     @Test
+    void teacherOnlyExcludesSuperadmin() {
+        assertTrue(SpecialIdentitySupport.isTeacherOnly(Set.of("special_teacher")));
+        assertTrue(SpecialIdentitySupport.isTeacherOnly(Set.of("special_teacher", "special_parent")));
+        assertFalse(SpecialIdentitySupport.isTeacherOnly(Set.of("special_teacher", "superadmin")));
+        assertFalse(SpecialIdentitySupport.isTeacherOnly(Set.of("superadmin")));
+        assertTrue(SpecialIdentitySupport.isSuperAdmin(Set.of("superadmin")));
+    }
+
+    @Test
+    void teacherOnlyForeignRowIsForbidden() {
+        org.dromara.common.core.exception.ServiceException ex = assertThrows(
+            org.dromara.common.core.exception.ServiceException.class,
+            () -> SpecialIdentitySupport.assertTeacherOwns(true, false));
+        assertEquals("没有权限访问", ex.getMessage());
+        SpecialIdentitySupport.assertTeacherOwns(true, true);
+        SpecialIdentitySupport.assertTeacherOwns(false, false);
+    }
+
+    @Test
     void cannotDropLastRole() {
         assertThrows(IllegalArgumentException.class,
             () -> SpecialIdentitySupport.assertKeepAtLeastOneRole(false, false));

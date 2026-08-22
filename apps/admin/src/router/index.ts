@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@/api/request'
+import { adminHomePath, canOpenAdminPath, isTeacherOnly, readStoredRoles } from '@/utils/admin-access'
 
 const RESOURCE_TYPES = ['course', 'tool', 'teacher', 'assessment'] as const
 
@@ -69,6 +70,12 @@ const router = createRouter({
       meta: { title: '用户角色', breadcrumb: ['用户角色'] },
     },
     {
+      path: '/teacher/me',
+      name: 'TeacherMe',
+      component: () => import('@/views/teacher/Me.vue'),
+      meta: { title: '我的资料', breadcrumb: ['我的资料'] },
+    },
+    {
       path: '/teacher',
       name: 'Teacher',
       component: () => import('@/views/teacher/Index.vue'),
@@ -83,13 +90,36 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const token = getToken()
   if (!to.meta.public && !token) {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
-  if (to.path === '/login' && token) {
-    return '/dashboard'
+  if (!token) {
+    return
+  }
+  let roles = readStoredRoles()
+  if (roles.length === 0) {
+    const { useAuthStore } = await import('@/store/auth')
+    try {
+      await useAuthStore().fetchProfile()
+      roles = [...useAuthStore().roles]
+    }
+    catch {
+      roles = readStoredRoles()
+    }
+  }
+  if (to.path === '/login') {
+    return adminHomePath(roles)
+  }
+  if (roles.length === 0) {
+    return
+  }
+  if (isTeacherOnly(roles) && to.path === '/teacher') {
+    return '/teacher/me'
+  }
+  if (!canOpenAdminPath(to.path, roles)) {
+    return adminHomePath(roles)
   }
 })
 

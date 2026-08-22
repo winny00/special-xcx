@@ -1,5 +1,9 @@
 package org.dromara.special.util;
 
+import org.dromara.common.core.exception.ServiceException;
+import org.dromara.common.satoken.utils.LoginHelper;
+import org.dromara.system.api.model.LoginUser;
+
 import java.util.Set;
 
 /**
@@ -67,6 +71,42 @@ public final class SpecialIdentitySupport {
             return false;
         }
         return roleKeys.contains(SUPERADMIN_ROLE_KEY) || roleKeys.contains(TEACHER_ROLE_KEY);
+    }
+
+    public static boolean isSuperAdmin(Set<String> roleKeys) {
+        return roleKeys != null && roleKeys.contains(SUPERADMIN_ROLE_KEY);
+    }
+
+    public static boolean isTeacherOnly(Set<String> roleKeys) {
+        return roleKeys != null && roleKeys.contains(TEACHER_ROLE_KEY) && !isSuperAdmin(roleKeys);
+    }
+
+    public static boolean isTeacherOnlyUser(LoginUser loginUser) {
+        if (loginUser == null) {
+            return false;
+        }
+        return isTeacherOnly(loginUser.getRolePermission());
+    }
+
+    /**
+     * 无登录上下文时视为非老师专属，避免单测/公开查询触发 Sa-Token。
+     */
+    public static boolean currentUserIsTeacherOnly() {
+        try {
+            return isTeacherOnlyUser(LoginHelper.getLoginUser());
+        }
+        catch (RuntimeException ex) {
+            return false;
+        }
+    }
+
+    /**
+     * 老师（非超管）读/写他人档案或预约时拒绝。
+     */
+    public static void assertTeacherOwns(boolean teacherOnly, boolean owning) {
+        if (teacherOnly && !owning) {
+            throw new ServiceException("没有权限访问");
+        }
     }
 
     public static void assertKeepAtLeastOneRole(boolean parent, boolean teacher) {

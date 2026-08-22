@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import request, { CLIENT_ID } from '@/api/request'
 import { useAuthStore } from '@/store/auth'
+import { adminHomePath, canOpenAdminPath } from '@/utils/admin-access'
 
 const router = useRouter()
 const route = useRoute()
@@ -55,9 +56,11 @@ async function handleLogin() {
       return
     }
     auth.saveToken(token)
+    await auth.fetchProfile()
     ElMessage.success('登录成功')
-    const redirect = (route.query.redirect as string) || '/dashboard'
-    router.push(redirect)
+    const fallback = adminHomePath(auth.roles)
+    const redirect = (route.query.redirect as string) || fallback
+    router.replace(canOpenAdminPath(redirect, auth.roles) ? redirect : fallback)
   } finally {
     loading.value = false
   }
@@ -99,7 +102,7 @@ async function handleLogin() {
 
         <el-form @submit.prevent="handleLogin">
           <el-form-item>
-            <el-input v-model="form.username" placeholder="用户名" autocomplete="username">
+            <el-input v-model="form.username" placeholder="用户名或手机号" autocomplete="username">
               <template #prefix>
                 <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8" />

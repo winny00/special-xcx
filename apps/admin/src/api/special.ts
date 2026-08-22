@@ -217,6 +217,10 @@ export function listTeachers(params?: ListQuery) {
   return request.get<PageResult<SpecialTeacher>>('/special/teacher/list', { params })
 }
 
+export function getMyTeacher() {
+  return request.get<SpecialTeacher>('/special/teacher/me')
+}
+
 export function addTeacher(data: SpecialTeacher) {
   return request.post('/special/teacher', data)
 }

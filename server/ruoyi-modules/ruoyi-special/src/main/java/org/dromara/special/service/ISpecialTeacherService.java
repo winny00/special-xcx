@@ -16,6 +16,8 @@ public interface ISpecialTeacherService {
 
     SpecialTeacherVo queryById(Long id);
 
+    SpecialTeacherVo queryOwn();
+
     PageResult<SpecialTeacherVo> queryPageList(SpecialTeacherBo bo, PageQuery pageQuery);
 
     List<SpecialTeacherVo> queryList(SpecialTeacherBo bo);

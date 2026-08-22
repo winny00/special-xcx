@@ -20,6 +20,7 @@ import org.dromara.special.mapper.SpecialResourceMapper;
 import org.dromara.special.mapper.SpecialTeacherMapper;
 import org.dromara.special.service.ISpecialAppointmentService;
 import org.dromara.special.util.SpecialAuditSupport;
+import org.dromara.special.util.SpecialIdentitySupport;
 import org.dromara.system.domain.vo.SysUserVo;
 import org.dromara.system.service.ISysUserService;
 import org.springframework.stereotype.Service;
@@ -43,11 +44,14 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
 
     @Override
     public SpecialAppointmentVo queryById(Long id) {
-        return baseMapper.selectVoById(id);
+        SpecialAppointmentVo vo = baseMapper.selectVoById(id);
+        assertOwnsAppointment(vo == null ? null : vo.getTeacherId());
+        return vo;
     }
 
     @Override
     public PageResult<SpecialAppointmentVo> queryPageList(SpecialAppointmentBo bo, PageQuery pageQuery) {
+        applySelfTeacherId(bo);
         LambdaQueryWrapper<SpecialAppointment> lqw = buildQueryWrapper(bo);
         Page<SpecialAppointmentVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         return PageResult.build(result.getRecords(), result.getTotal());
@@ -55,6 +59,7 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
 
     @Override
     public List<SpecialAppointmentVo> queryList(SpecialAppointmentBo bo) {
+        applySelfTeacherId(bo);
         return baseMapper.selectVoList(buildQueryWrapper(bo));
     }
 
@@ -101,6 +106,11 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
 
     @Override
     public Boolean updateByBo(SpecialAppointmentBo bo) {
+        SpecialAppointment current = bo.getId() == null ? null : baseMapper.selectById(bo.getId());
+        assertOwnsAppointment(current == null ? null : current.getTeacherId());
+        if (SpecialIdentitySupport.currentUserIsTeacherOnly() && current != null) {
+            bo.setTeacherId(current.getTeacherId());
+        }
         SpecialAppointment update = MapstructUtils.convert(bo, SpecialAppointment.class);
         validEntityBeforeSave(update);
         return baseMapper.updateById(update) > 0;
@@ -132,6 +142,31 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
 
     private void validEntityBeforeSave(SpecialAppointment entity) {
         // 预留业务校验
+    }
+
+    private void applySelfTeacherId(SpecialAppointmentBo bo) {
+        if (!SpecialIdentitySupport.currentUserIsTeacherOnly()) {
+            return;
+        }
+        Long ownTeacherId = resolveOwnTeacherId();
+        bo.setTeacherId(ownTeacherId == null ? -1L : ownTeacherId);
+    }
+
+    private Long resolveOwnTeacherId() {
+        Long userId = LoginHelper.getUserId();
+        if (userId == null) {
+            return null;
+        }
+        SpecialTeacher own = teacherMapper.selectOne(
+            Wrappers.<SpecialTeacher>lambdaQuery().eq(SpecialTeacher::getUserId, userId));
+        return own == null ? null : own.getId();
+    }
+
+    private void assertOwnsAppointment(Long rowTeacherId) {
+        boolean teacherOnly = SpecialIdentitySupport.currentUserIsTeacherOnly();
+        Long ownTeacherId = teacherOnly ? resolveOwnTeacherId() : null;
+        boolean owning = ownTeacherId != null && ownTeacherId.equals(rowTeacherId);
+        SpecialIdentitySupport.assertTeacherOwns(teacherOnly, owning);
     }
 
     @Override

@@ -5,11 +5,13 @@ import org.dromara.common.core.constant.SystemConstants;
 import org.dromara.common.core.domain.PageResult;
 import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.mybatis.core.page.PageQuery;
+import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.special.domain.SpecialTeacher;
 import org.dromara.special.domain.bo.SpecialTeacherBo;
 import org.dromara.special.domain.vo.SpecialTeacherVo;
 import org.dromara.special.mapper.SpecialTeacherMapper;
 import org.dromara.special.util.SpecialParentSupport;
+import org.dromara.system.api.model.LoginUser;
 import org.dromara.system.domain.SysUserRole;
 import org.dromara.system.domain.bo.SysUserBo;
 import org.dromara.system.domain.vo.SysRoleVo;
@@ -24,15 +26,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -178,6 +183,64 @@ class SpecialTeacherServiceImplTest {
     }
 
     @Test
+    void teacherOnlyCannotReadAnotherTeacherRow() {
+        SpecialTeacherVo vo = new SpecialTeacherVo();
+        vo.setId(1L);
+        vo.setUserId(99L);
+        when(baseMapper.selectVoById(1L)).thenReturn(vo);
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+            helper.when(LoginHelper::getLoginUser).thenReturn(teacherLogin(10L));
+            helper.when(LoginHelper::getUserId).thenReturn(10L);
+
+            ServiceException ex = assertThrows(ServiceException.class, () -> service.queryById(1L));
+            assertEquals("没有权限访问", ex.getMessage());
+        }
+    }
+
+    @Test
+    void teacherOnlyListForcesOwnUserId() {
+        Page<SpecialTeacherVo> page = new Page<>(1, 10);
+        page.setRecords(List.of());
+        page.setTotal(0);
+        when(baseMapper.selectVoPage(any(), any())).thenReturn(page);
+        SpecialTeacherBo bo = new SpecialTeacherBo();
+        PageQuery query = new PageQuery();
+        query.setPageNum(1);
+        query.setPageSize(10);
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+            helper.when(LoginHelper::getLoginUser).thenReturn(teacherLogin(10L));
+            helper.when(LoginHelper::getUserId).thenReturn(10L);
+
+            service.queryPageList(bo, query);
+        }
+
+        assertEquals(10L, bo.getUserId());
+    }
+
+    @Test
+    void teacherOnlyCannotChangeAuditStatus() {
+        SpecialTeacher current = new SpecialTeacher();
+        current.setId(1L);
+        current.setUserId(10L);
+        current.setStatus(0);
+        when(baseMapper.selectById(1L)).thenReturn(current);
+        SpecialTeacherBo bo = new SpecialTeacherBo();
+        bo.setId(1L);
+        bo.setName("周老师");
+        bo.setStatus(1);
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+            helper.when(LoginHelper::getLoginUser).thenReturn(teacherLogin(10L));
+            helper.when(LoginHelper::getUserId).thenReturn(10L);
+
+            ServiceException ex = assertThrows(ServiceException.class, () -> service.updateByBo(bo));
+            assertEquals("没有权限访问", ex.getMessage());
+        }
+    }
+
+    @Test
     void rebindingPhoneRevokesTeacherRoleOnPreviousUser() {
         String newPhone = "13900139000";
         when(userService.selectUserByPhoneNumber(newPhone)).thenReturn(user(20L, newPhone));
@@ -208,6 +271,13 @@ class SpecialTeacherServiceImplTest {
         user.setUserId(userId);
         user.setPhoneNumber(phone);
         user.setStatus(SystemConstants.NORMAL);
+        return user;
+    }
+
+    private static LoginUser teacherLogin(Long userId) {
+        LoginUser user = new LoginUser();
+        user.setUserId(userId);
+        user.setRolePermission(Set.of("special_teacher"));
         return user;
     }
 

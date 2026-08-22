@@ -1,6 +1,7 @@
 import axios, { type AxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
+import { clearStoredAdminRoles } from '@/utils/admin-access'
 
 export interface RuoYiResponse<T = unknown> {
   code: number
@@ -73,6 +74,7 @@ async function request<T>(config: AxiosRequestConfig): Promise<T> {
   ElMessage.error(res.msg || '请求失败')
   if (res.code === 401) {
     removeToken()
+    clearStoredAdminRoles()
     router.push('/login')
   }
   return Promise.reject(new ApiError(res.msg || '请求失败', res.code, res.data))

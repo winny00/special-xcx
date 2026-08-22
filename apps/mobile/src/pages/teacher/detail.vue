@@ -55,10 +55,10 @@ function goAppointment() {
     return
   }
   const title = encodeURIComponent(teacher.value.name || '')
-  const tid = String(teacher.value.id)
+  const tid = teacher.value.id
   let url = `/pages/resource/appointment?title=${title}&teacherId=${tid}`
   if (teacher.value.resourceId) {
-    url += `&resourceId=${String(teacher.value.resourceId)}`
+    url += `&resourceId=${teacher.value.resourceId}`
   }
   if (!isPhoneBound(userStore.userInfo.phoneBound)) {
     uni.navigateTo({

@@ -50,8 +50,8 @@ function search() {
   loadMore()
 }
 
-function goDetail(id: string | number) {
-  uni.navigateTo({ url: `/pages/teacher/detail?id=${String(id)}` })
+function goDetail(id: string) {
+  uni.navigateTo({ url: `/pages/teacher/detail?id=${id}` })
 }
 
 function goHome() {

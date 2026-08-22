@@ -46,9 +46,9 @@ export interface ISpecialArticle {
 
 /** 预约申请 */
 export interface ISpecialAppointment {
-  id?: string | number
-  resourceId?: string | number
-  teacherId?: string | number
+  id?: string
+  resourceId?: string
+  teacherId?: string
   resourceTitle?: string
   contactName: string
   contactPhone: string
@@ -82,16 +82,16 @@ export const ARTICLE_CATEGORIES = ['policy', 'news', 'guide'] as const
 
 /** 特教老师档案 */
 export interface ISpecialTeacher {
-  id: string | number
-  userId?: string | number
+  id: string
+  userId?: string
   name: string
   title?: string
   specialties?: string
   qualification?: string
   certImageUrl?: string
   avatarUrl?: string
-  orgId?: string | number
+  orgId?: string
   intro?: string
   status?: number
-  resourceId?: string | number
+  resourceId?: string
 }

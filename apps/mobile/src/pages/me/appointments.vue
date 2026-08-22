@@ -56,8 +56,8 @@ function goResourceList() {
   uni.switchTab({ url: '/pages/resource/list' })
 }
 
-function goDetail(id: string | number) {
-  uni.navigateTo({ url: `/pages/me/appointment-detail?id=${String(id)}` })
+function goDetail(id: string) {
+  uni.navigateTo({ url: `/pages/me/appointment-detail?id=${id}` })
 }
 
 function loadMore() {

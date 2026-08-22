@@ -1,5 +1,6 @@
 import type { IRuoYiPageResult, ISpecialTeacher } from './types/special'
 import { http } from '@/http/http'
+import { mapAppointmentIds, mapTeacherIds } from './snowflake'
 
 /** 家长资料 */
 export interface IMobileProfile {
@@ -16,9 +17,9 @@ export interface IMobileProfile {
 
 /** 我的预约 */
 export interface IMyAppointment {
-  id: string | number
-  resourceId?: string | number
-  teacherId?: string | number
+  id: string
+  resourceId?: string
+  teacherId?: string
   resourceTitle?: string
   contactName?: string
   contactPhone?: string
@@ -28,15 +29,6 @@ export interface IMyAppointment {
   handlerRemark?: string
   createTime?: string
   updateTime?: string
-}
-
-function mapAppointmentIds(row: IMyAppointment) {
-  return {
-    ...row,
-    id: row.id == null ? row.id : String(row.id),
-    resourceId: row.resourceId == null ? row.resourceId : String(row.resourceId),
-    teacherId: row.teacherId == null ? row.teacherId : String(row.teacherId),
-  }
 }
 
 export function getMyProfile() {
@@ -51,18 +43,18 @@ export function updateMyProfile(data: { nickname?: string, phone?: string }) {
 }
 
 export function getMyAppointments(params: { pageNum?: number, pageSize?: number, appointStatus?: number }) {
-  return http.get<IRuoYiPageResult<IMyAppointment>>('/special/mobile/me/appointments', params).then((res) => ({
+  return http.get<IRuoYiPageResult<Record<string, unknown>>>('/special/mobile/me/appointments', params).then((res) => ({
     ...res,
-    rows: (res.rows || []).map(mapAppointmentIds),
+    rows: (res.rows || []).map(row => mapAppointmentIds(row as Record<string, unknown>)) as IMyAppointment[],
   }))
 }
 
-export function getMyAppointmentDetail(id: string | number) {
-  return http.get<IMyAppointment>(`/special/mobile/me/appointments/${id}`).then((row) => {
+export function getMyAppointmentDetail(id: string) {
+  return http.get<Record<string, unknown>>(`/special/mobile/me/appointments/${id}`).then((row) => {
     if (!row) {
-      return row
+      return row as unknown as IMyAppointment
     }
-    return mapAppointmentIds(row)
+    return mapAppointmentIds(row) as IMyAppointment
   })
 }
 
@@ -77,17 +69,11 @@ export function bindMyPhone(data: { phone: string, smsCode: string }) {
 }
 
 export function getMyTeacherProfile() {
-  return http.get<ISpecialTeacher>('/special/mobile/me/teacher-profile').then((row) => {
+  return http.get<Record<string, unknown>>('/special/mobile/me/teacher-profile').then((row) => {
     if (!row) {
-      return row
+      return row as unknown as ISpecialTeacher
     }
-    return {
-      ...row,
-      id: row.id == null ? row.id : String(row.id),
-      userId: row.userId == null ? row.userId : String(row.userId),
-      orgId: row.orgId == null ? row.orgId : String(row.orgId),
-      resourceId: row.resourceId == null ? row.resourceId : String(row.resourceId),
-    }
+    return mapTeacherIds(row) as ISpecialTeacher
   })
 }
 

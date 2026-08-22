@@ -85,9 +85,15 @@ public class SpecialResource extends BaseEntity {
     private BigDecimal price;
 
     /**
-     * 状态（0草稿 1已发布）
+     * 状态（0草稿 1已发布 2已下架）
      */
     private Integer status;
+
+    private String auditRemark;
+
+    private Long auditBy;
+
+    private java.time.LocalDateTime auditTime;
 
     /**
      * 浏览次数

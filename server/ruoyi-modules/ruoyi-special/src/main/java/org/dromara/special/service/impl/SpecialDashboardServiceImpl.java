@@ -5,10 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.dromara.special.domain.SpecialAppointment;
 import org.dromara.special.domain.SpecialOrganization;
 import org.dromara.special.domain.SpecialResource;
+import org.dromara.special.domain.SpecialTeacher;
 import org.dromara.special.domain.vo.SpecialDashboardStatsVo;
 import org.dromara.special.mapper.SpecialAppointmentMapper;
 import org.dromara.special.mapper.SpecialOrganizationMapper;
 import org.dromara.special.mapper.SpecialResourceMapper;
+import org.dromara.special.mapper.SpecialTeacherMapper;
 import org.dromara.special.service.ISpecialDashboardService;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +37,7 @@ public class SpecialDashboardServiceImpl implements ISpecialDashboardService {
     private final SpecialResourceMapper resourceMapper;
     private final SpecialOrganizationMapper organizationMapper;
     private final SpecialAppointmentMapper appointmentMapper;
+    private final SpecialTeacherMapper teacherMapper;
 
     @Override
     public SpecialDashboardStatsVo queryStats() {
@@ -60,6 +63,10 @@ public class SpecialDashboardServiceImpl implements ISpecialDashboardService {
 
         vo.setOrgAuditPending(organizationMapper.selectCount(
             Wrappers.<SpecialOrganization>lambdaQuery().eq(SpecialOrganization::getAuditStatus, 0)
+        ));
+
+        vo.setTeacherAuditPending(teacherMapper.selectCount(
+            Wrappers.<SpecialTeacher>lambdaQuery().eq(SpecialTeacher::getStatus, 0)
         ));
 
         vo.setAppointmentPending(appointmentMapper.selectCount(

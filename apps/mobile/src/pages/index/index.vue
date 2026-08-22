@@ -85,6 +85,10 @@ function goShortcut(action: string) {
     uni.switchTab({ url: '/pages/organization/list' })
     return
   }
+  if (action === 'teacher') {
+    uni.navigateTo({ url: '/pages/teacher/list' })
+    return
+  }
   if (action === 'appoint') {
     goResourceList()
     return

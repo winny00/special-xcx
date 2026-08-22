@@ -14,13 +14,16 @@ import org.dromara.special.domain.bo.SpecialAppointmentBo;
 import org.dromara.special.domain.bo.SpecialArticleBo;
 import org.dromara.special.domain.bo.SpecialOrganizationBo;
 import org.dromara.special.domain.bo.SpecialResourceBo;
+import org.dromara.special.domain.bo.SpecialTeacherBo;
 import org.dromara.special.domain.vo.SpecialArticleVo;
 import org.dromara.special.domain.vo.SpecialOrganizationVo;
 import org.dromara.special.domain.vo.SpecialResourceVo;
+import org.dromara.special.domain.vo.SpecialTeacherVo;
 import org.dromara.special.service.ISpecialAppointmentService;
 import org.dromara.special.service.ISpecialArticleService;
 import org.dromara.special.service.ISpecialOrganizationService;
 import org.dromara.special.service.ISpecialResourceService;
+import org.dromara.special.service.ISpecialTeacherService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,6 +43,7 @@ public class SpecialMobileController extends BaseController {
     private final ISpecialOrganizationService specialOrganizationService;
     private final ISpecialAppointmentService specialAppointmentService;
     private final ISpecialArticleService specialArticleService;
+    private final ISpecialTeacherService specialTeacherService;
 
     /**
      * 查询已发布资源列表
@@ -92,6 +96,23 @@ public class SpecialMobileController extends BaseController {
     public R<SpecialArticleVo> articleDetail(@NotNull(message = "主键不能为空")
                                              @PathVariable("id") Long id) {
         return R.ok(specialArticleService.queryPublishedById(id));
+    }
+
+    /**
+     * 已通过老师列表
+     */
+    @GetMapping("/teacher/list")
+    public R<PageResult<SpecialTeacherVo>> teacherList(@Validated(QueryGroup.class) SpecialTeacherBo bo, PageQuery pageQuery) {
+        return R.ok(specialTeacherService.queryApprovedPageList(bo, pageQuery));
+    }
+
+    /**
+     * 已通过老师详情
+     */
+    @GetMapping("/teacher/{id}")
+    public R<SpecialTeacherVo> teacherDetail(@NotNull(message = "主键不能为空")
+                                             @PathVariable("id") Long id) {
+        return R.ok(specialTeacherService.queryApprovedById(id));
     }
 
 }

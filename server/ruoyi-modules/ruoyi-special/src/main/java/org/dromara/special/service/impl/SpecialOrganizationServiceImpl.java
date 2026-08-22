@@ -9,13 +9,17 @@ import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.MapstructUtils;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.mybatis.core.page.PageQuery;
+import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.special.domain.SpecialOrganization;
+import org.dromara.special.domain.bo.SpecialAuditBo;
 import org.dromara.special.domain.bo.SpecialOrganizationBo;
 import org.dromara.special.domain.vo.SpecialOrganizationVo;
 import org.dromara.special.mapper.SpecialOrganizationMapper;
 import org.dromara.special.service.ISpecialOrganizationService;
+import org.dromara.special.util.SpecialAuditSupport;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -98,6 +102,26 @@ public class SpecialOrganizationServiceImpl implements ISpecialOrganizationServi
             }
         }
         return baseMapper.deleteByIds(ids) > 0;
+    }
+
+    @Override
+    public Boolean audit(SpecialAuditBo bo) {
+        SpecialAuditSupport.requireRemarkWhenReject(bo.getStatus(), bo.getRemark());
+        Long auditor = LoginHelper.getUserId();
+        LocalDateTime now = LocalDateTime.now();
+        for (Long id : bo.getIds()) {
+            if (baseMapper.selectById(id) == null) {
+                throw new ServiceException("机构不存在");
+            }
+            SpecialOrganization update = new SpecialOrganization();
+            update.setId(id);
+            update.setAuditStatus(bo.getStatus());
+            update.setAuditRemark(bo.getRemark());
+            update.setAuditBy(auditor);
+            update.setAuditTime(now);
+            baseMapper.updateById(update);
+        }
+        return true;
     }
 
 }

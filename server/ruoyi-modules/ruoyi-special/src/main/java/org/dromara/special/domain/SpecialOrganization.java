@@ -83,6 +83,12 @@ public class SpecialOrganization extends BaseEntity {
      */
     private Integer auditStatus;
 
+    private String auditRemark;
+
+    private Long auditBy;
+
+    private java.time.LocalDateTime auditTime;
+
     /**
      * 状态（0停用 1正常）
      */

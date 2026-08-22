@@ -78,3 +78,17 @@ export const ARTICLE_CATEGORY_MAP: Record<string, string> = {
 }
 
 export const ARTICLE_CATEGORIES = ['policy', 'news', 'guide'] as const
+
+/** 特教老师档案 */
+export interface ISpecialTeacher {
+  id: string | number
+  name: string
+  title?: string
+  specialties?: string
+  qualification?: string
+  certImageUrl?: string
+  avatarUrl?: string
+  orgId?: string | number
+  intro?: string
+  status?: number
+}

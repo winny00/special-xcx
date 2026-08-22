@@ -9,13 +9,17 @@ import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.MapstructUtils;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.mybatis.core.page.PageQuery;
+import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.special.domain.SpecialResource;
+import org.dromara.special.domain.bo.SpecialAuditBo;
 import org.dromara.special.domain.bo.SpecialResourceBo;
 import org.dromara.special.domain.vo.SpecialResourceVo;
 import org.dromara.special.mapper.SpecialResourceMapper;
 import org.dromara.special.service.ISpecialResourceService;
+import org.dromara.special.util.SpecialAuditSupport;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -114,6 +118,26 @@ public class SpecialResourceServiceImpl implements ISpecialResourceService {
             }
         }
         return baseMapper.deleteByIds(ids) > 0;
+    }
+
+    @Override
+    public Boolean audit(SpecialAuditBo bo) {
+        SpecialAuditSupport.requireRemarkWhenReject(bo.getStatus(), bo.getRemark());
+        Long auditor = LoginHelper.getUserId();
+        LocalDateTime now = LocalDateTime.now();
+        for (Long id : bo.getIds()) {
+            if (baseMapper.selectById(id) == null) {
+                throw new ServiceException("资源不存在");
+            }
+            SpecialResource update = new SpecialResource();
+            update.setId(id);
+            update.setStatus(bo.getStatus());
+            update.setAuditRemark(bo.getRemark());
+            update.setAuditBy(auditor);
+            update.setAuditTime(now);
+            baseMapper.updateById(update);
+        }
+        return true;
     }
 
 }

@@ -20,6 +20,7 @@ const statCards = computed(() => {
     { label: '资源总数', value: s.resourceTotal, hint: '课程 / 工具 / 老师 / 评估', icon: 'resource' },
     { label: '资源草稿', value: s.resourceDraftCount, hint: '待发布', icon: 'draft' },
     { label: '机构待审', value: s.orgAuditPending, hint: '入驻审核', icon: 'audit' },
+    { label: '老师待审', value: s.teacherAuditPending ?? 0, hint: '档案审核', icon: 'audit' },
     { label: '预约待处理', value: s.appointmentPending, hint: `今日新增 ${s.appointmentToday}`, icon: 'appoint' },
   ]
 })
@@ -80,6 +81,7 @@ onMounted(loadStats)
         <router-link to="/organization">机构管理</router-link>
         <router-link to="/appointment">预约管理</router-link>
         <router-link to="/parent">家长管理</router-link>
+        <router-link to="/teacher">老师档案</router-link>
         <router-link to="/audit">审核中心</router-link>
       </div>
     </div>

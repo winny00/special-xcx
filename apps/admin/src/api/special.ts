@@ -74,6 +74,7 @@ export interface DashboardStats {
   resourceByType: Record<string, number>
   resourceDraftCount: number
   orgAuditPending: number
+  teacherAuditPending: number
   appointmentPending: number
   appointmentToday: number
 }
@@ -185,4 +186,54 @@ export function listParents(params?: ListQuery) {
 
 export function getParent(userId: string) {
   return request.get<SpecialParentDetail>(`/special/parent/${userId}`)
+}
+
+export interface SpecialTeacher {
+  id?: string
+  name: string
+  title?: string
+  specialties?: string
+  qualification?: string
+  certImageUrl?: string
+  avatarUrl?: string
+  orgId?: string
+  intro?: string
+  status?: number
+  resourceId?: string
+  auditRemark?: string
+  auditTime?: string
+}
+
+export interface SpecialAuditPayload {
+  ids: string[]
+  status: number
+  remark?: string
+}
+
+export function listTeachers(params?: ListQuery) {
+  return request.get<PageResult<SpecialTeacher>>('/special/teacher/list', { params })
+}
+
+export function addTeacher(data: SpecialTeacher) {
+  return request.post('/special/teacher', data)
+}
+
+export function updateTeacher(data: SpecialTeacher) {
+  return request.put('/special/teacher', data)
+}
+
+export function deleteTeachers(ids: string[]) {
+  return request.delete(`/special/teacher/${ids.join(',')}`)
+}
+
+export function auditTeachers(data: SpecialAuditPayload) {
+  return request.put('/special/teacher/audit', data)
+}
+
+export function auditOrganizations(data: SpecialAuditPayload) {
+  return request.put('/special/organization/audit', data)
+}
+
+export function auditResources(data: SpecialAuditPayload) {
+  return request.put('/special/resource/audit', data)
 }

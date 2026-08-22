@@ -16,6 +16,7 @@ import org.dromara.common.log.annotation.Log;
 import org.dromara.common.log.enums.BusinessType;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.web.core.BaseController;
+import org.dromara.special.domain.bo.SpecialAuditBo;
 import org.dromara.special.domain.bo.SpecialOrganizationBo;
 import org.dromara.special.domain.vo.SpecialOrganizationVo;
 import org.dromara.special.service.ISpecialOrganizationService;
@@ -89,6 +90,13 @@ public class SpecialOrganizationController extends BaseController {
     @PutMapping()
     public R<Void> edit(@Validated(EditGroup.class) @RequestBody SpecialOrganizationBo bo) {
         return toAjax(specialOrganizationService.updateByBo(bo));
+    }
+
+    @SaCheckPermission("special:organization:edit")
+    @Log(title = "特教机构", businessType = BusinessType.UPDATE)
+    @PutMapping("/audit")
+    public R<Void> audit(@Validated @RequestBody SpecialAuditBo bo) {
+        return toAjax(specialOrganizationService.audit(bo));
     }
 
     /**

@@ -1,4 +1,4 @@
-import type { IRuoYiPageResult, ISpecialAppointment, ISpecialArticle, ISpecialOrganization, ISpecialResource } from './types/special'
+import type { IRuoYiPageResult, ISpecialAppointment, ISpecialArticle, ISpecialOrganization, ISpecialResource, ISpecialTeacher } from './types/special'
 import { http } from '@/http/http'
 
 /** 资源列表（已发布） */
@@ -45,4 +45,17 @@ export function getArticleList(params: {
 /** 资讯详情 */
 export function getArticleDetail(id: string | number) {
   return http.get<ISpecialArticle>(`/special/mobile/article/${id}`)
+}
+
+export function getTeacherList(params: {
+  pageNum?: number
+  pageSize?: number
+  name?: string
+  specialties?: string
+}) {
+  return http.get<IRuoYiPageResult<ISpecialTeacher>>('/special/mobile/teacher/list', params)
+}
+
+export function getTeacherDetail(id: string | number) {
+  return http.get<ISpecialTeacher>(`/special/mobile/teacher/${id}`)
 }

@@ -95,6 +95,12 @@ public class SpecialOrganizationVo implements Serializable {
     @ExcelProperty(value = "审核状态")
     private Integer auditStatus;
 
+    private String auditRemark;
+
+    private Long auditBy;
+
+    private LocalDateTime auditTime;
+
     /**
      * 状态（0停用 1正常）
      */

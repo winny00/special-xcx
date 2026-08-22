@@ -63,6 +63,12 @@ const router = createRouter({
       meta: { title: '家长管理', breadcrumb: ['家长管理'] },
     },
     {
+      path: '/teacher',
+      name: 'Teacher',
+      component: () => import('@/views/teacher/Index.vue'),
+      meta: { title: '老师档案', breadcrumb: ['老师档案'] },
+    },
+    {
       path: '/audit',
       name: 'Audit',
       component: () => import('@/views/audit/Index.vue'),

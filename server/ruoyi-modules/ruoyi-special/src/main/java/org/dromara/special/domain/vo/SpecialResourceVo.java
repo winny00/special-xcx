@@ -97,10 +97,16 @@ public class SpecialResourceVo implements Serializable {
     private BigDecimal price;
 
     /**
-     * 状态（0草稿 1已发布）
+     * 状态（0草稿 1已发布 2已下架）
      */
     @ExcelProperty(value = "状态")
     private Integer status;
+
+    private String auditRemark;
+
+    private Long auditBy;
+
+    private LocalDateTime auditTime;
 
     /**
      * 浏览次数

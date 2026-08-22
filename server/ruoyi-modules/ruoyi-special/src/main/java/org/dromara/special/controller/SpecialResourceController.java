@@ -16,6 +16,7 @@ import org.dromara.common.log.annotation.Log;
 import org.dromara.common.log.enums.BusinessType;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.web.core.BaseController;
+import org.dromara.special.domain.bo.SpecialAuditBo;
 import org.dromara.special.domain.bo.SpecialResourceBo;
 import org.dromara.special.domain.vo.SpecialResourceVo;
 import org.dromara.special.service.ISpecialResourceService;
@@ -89,6 +90,13 @@ public class SpecialResourceController extends BaseController {
     @PutMapping()
     public R<Void> edit(@Validated(EditGroup.class) @RequestBody SpecialResourceBo bo) {
         return toAjax(specialResourceService.updateByBo(bo));
+    }
+
+    @SaCheckPermission("special:resource:edit")
+    @Log(title = "特教资源", businessType = BusinessType.UPDATE)
+    @PutMapping("/audit")
+    public R<Void> audit(@Validated @RequestBody SpecialAuditBo bo) {
+        return toAjax(specialResourceService.audit(bo));
     }
 
     /**

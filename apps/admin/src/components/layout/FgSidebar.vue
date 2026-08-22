@@ -56,6 +56,12 @@ const activeMenu = computed(() => route.path)
         </i>
         <template #title>机构管理</template>
       </el-menu-item>
+      <el-menu-item index="/teacher">
+        <i class="menu-svg" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+        </i>
+        <template #title>老师档案</template>
+      </el-menu-item>
       <el-menu-item index="/article">
         <i class="menu-svg" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5" /></svg>

@@ -2,6 +2,7 @@ package org.dromara.special.service;
 
 import org.dromara.common.core.domain.PageResult;
 import org.dromara.common.mybatis.core.page.PageQuery;
+import org.dromara.special.domain.bo.SpecialAuditBo;
 import org.dromara.special.domain.bo.SpecialResourceBo;
 import org.dromara.special.domain.vo.SpecialResourceVo;
 
@@ -81,5 +82,7 @@ public interface ISpecialResourceService {
      * @return 是否删除成功
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
+    Boolean audit(SpecialAuditBo bo);
 
 }

@@ -25,6 +25,8 @@ public class SpecialDashboardStatsVo implements Serializable {
 
     private Long orgAuditPending;
 
+    private Long teacherAuditPending;
+
     private Long appointmentPending;
 
     private Long appointmentToday;

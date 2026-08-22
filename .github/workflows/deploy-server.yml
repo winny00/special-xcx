@@ -20,6 +20,7 @@ on:
       - 'server/**'
       - 'scripts/ecs/migrate-phase2a.sql'
       - 'scripts/ecs/migrate-phase2b-parent.sql'
+      - 'scripts/ecs/migrate-phase2b-teacher-audit.sql'
       - 'scripts/ecs/nginx-special.conf'
       - 'scripts/ecs/deploy-server.sh'
       - '.github/workflows/deploy-server.yml'
@@ -112,6 +113,7 @@ jobs:
           scp -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
             scripts/ecs/migrate-phase2a.sql \
             scripts/ecs/migrate-phase2b-parent.sql \
+            scripts/ecs/migrate-phase2b-teacher-audit.sql \
             "${ECS_USERNAME}@${ECS_HOST}:/tmp/"
           ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
             "${ECS_USERNAME}@${ECS_HOST}" 'bash -s' <<'REMOTE'
@@ -126,8 +128,9 @@ jobs:
           MYSQL_PWD="${MYSQL_ROOT_PASSWORD:-${DB_PASSWORD:-root}}"
           mysql -uroot -p"$MYSQL_PWD" "$DB_NAME" < /tmp/migrate-phase2a.sql
           mysql -uroot -p"$MYSQL_PWD" "$DB_NAME" < /tmp/migrate-phase2b-parent.sql
-          rm -f /tmp/migrate-phase2a.sql /tmp/migrate-phase2b-parent.sql
-          echo "phase2a and parent CRM migrations applied"
+          mysql -uroot -p"$MYSQL_PWD" "$DB_NAME" < /tmp/migrate-phase2b-teacher-audit.sql
+          rm -f /tmp/migrate-phase2a.sql /tmp/migrate-phase2b-parent.sql /tmp/migrate-phase2b-teacher-audit.sql
+          echo "phase2a / parent / teacher-audit migrations applied"
           REMOTE
 
       - name: Deploy jar and restart backend

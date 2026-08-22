@@ -42,6 +42,11 @@ public class SpecialTeacherVo implements Serializable {
 
     private Long resourceId;
 
+    /**
+     * 已绑账号的手机号（来自 sys_user，非档案表字段）
+     */
+    private String phone;
+
     private String auditRemark;
 
     private Long auditBy;

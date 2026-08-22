@@ -38,6 +38,9 @@ const form = reactive<SpecialTeacher>({
   orgId: '',
   intro: '',
   status: 0,
+  phone: '',
+  initPassword: '',
+  userId: '',
 })
 
 function orgOptionId(org: SpecialOrganization) {
@@ -108,6 +111,7 @@ function handleReset() {
 function resetForm() {
   Object.assign(form, {
     id: undefined,
+    userId: '',
     name: '',
     title: '',
     specialties: '',
@@ -117,6 +121,8 @@ function resetForm() {
     orgId: '',
     intro: '',
     status: 0,
+    phone: '',
+    initPassword: '',
   })
 }
 
@@ -128,7 +134,14 @@ function handleAdd() {
 
 function handleEdit(row: SpecialTeacher) {
   const orgId = row.orgId ? String(row.orgId) : ''
-  Object.assign(form, { ...row, id: rowId(row), orgId })
+  Object.assign(form, {
+    ...row,
+    id: rowId(row),
+    orgId,
+    userId: row.userId ? String(row.userId) : '',
+    phone: row.phone || '',
+    initPassword: '',
+  })
   if (orgId)
     mergeOrgOption(orgId)
   dialogTitle.value = '编辑老师'
@@ -138,6 +151,10 @@ function handleEdit(row: SpecialTeacher) {
 async function handleSubmit() {
   if (!form.name) {
     ElMessage.warning('请输入姓名')
+    return
+  }
+  if (!form.id && !form.phone?.trim()) {
+    ElMessage.warning('请填写手机号')
     return
   }
   let payload: SpecialTeacher
@@ -175,6 +192,15 @@ watch(() => route.query.editId, (editId) => {
     handleEdit(row)
 })
 
+watch(() => route.query.phone, (phone) => {
+  if (!phone || form.id)
+    return
+  resetForm()
+  form.phone = String(phone)
+  dialogTitle.value = '新增老师'
+  dialogVisible.value = true
+})
+
 onMounted(async () => {
   await Promise.all([fetchList(), fetchOrgOptions()])
   const editId = route.query.editId
@@ -182,6 +208,12 @@ onMounted(async () => {
     const row = tableData.value.find(item => String(item.id) === String(editId))
     if (row)
       handleEdit(row)
+  }
+  else if (route.query.phone) {
+    resetForm()
+    form.phone = String(route.query.phone)
+    dialogTitle.value = '新增老师'
+    dialogVisible.value = true
   }
 })
 </script>
@@ -228,6 +260,13 @@ onMounted(async () => {
           <el-table-column prop="name" label="姓名" min-width="120" />
           <el-table-column prop="title" label="头衔" width="140" />
           <el-table-column prop="specialties" label="擅长" min-width="160" show-overflow-tooltip />
+          <el-table-column label="账号" width="110">
+            <template #default="{ row }">
+              <el-tag :type="row.userId ? 'success' : 'info'" effect="light">
+                {{ row.userId ? '已绑账号' : '未绑' }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="状态" width="100">
             <template #default="{ row }">
               <el-tag :type="statusMap[row.status ?? 0]?.type || 'info'" effect="light">
@@ -263,6 +302,15 @@ onMounted(async () => {
     <el-form label-width="90px">
       <el-form-item label="姓名" required>
         <el-input v-model="form.name" maxlength="100" />
+      </el-form-item>
+      <el-form-item label="手机号" :required="!form.id">
+        <el-input v-model="form.phone" maxlength="11" placeholder="11 位手机号，作为登录账号" />
+      </el-form-item>
+      <el-form-item v-if="!form.id" label="初始密码" required>
+        <el-input v-model="form.initPassword" type="password" show-password maxlength="32" placeholder="新建账号时必填" />
+      </el-form-item>
+      <el-form-item v-else-if="!form.userId" label="初始密码">
+        <el-input v-model="form.initPassword" type="password" show-password maxlength="32" placeholder="补绑新账号时填写" />
       </el-form-item>
       <el-form-item label="头衔">
         <el-input v-model="form.title" maxlength="100" placeholder="如 语言干预师" />

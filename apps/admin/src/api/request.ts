@@ -8,6 +8,18 @@ export interface RuoYiResponse<T = unknown> {
   msg: string
 }
 
+export class ApiError<T = unknown> extends Error {
+  code: number
+  data?: T
+
+  constructor(message: string, code: number, data?: T) {
+    super(message)
+    this.name = 'ApiError'
+    this.code = code
+    this.data = data
+  }
+}
+
 export interface PageResult<T> {
   rows: T[]
   total: number
@@ -63,7 +75,7 @@ async function request<T>(config: AxiosRequestConfig): Promise<T> {
     removeToken()
     router.push('/login')
   }
-  return Promise.reject(new Error(res.msg || '请求失败'))
+  return Promise.reject(new ApiError(res.msg || '请求失败', res.code, res.data))
 }
 
 export default {

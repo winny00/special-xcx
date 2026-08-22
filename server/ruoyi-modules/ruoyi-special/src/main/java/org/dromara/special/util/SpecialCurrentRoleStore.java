@@ -50,9 +50,21 @@ public final class SpecialCurrentRoleStore {
         write(pickRoleForLogin(clientId, roleKeys));
     }
 
+    /**
+     * Sa-Token session map rejects null; skip persisting the role key in that case.
+     */
+    public static boolean shouldPersistRole(String roleKey) {
+        return roleKey != null;
+    }
+
     public static void write(String roleKey) {
-        StpUtil.getTokenSession().set(SESSION_KEY, roleKey);
+        if (shouldPersistRole(roleKey)) {
+            StpUtil.getTokenSession().set(SESSION_KEY, roleKey);
+        }
         LoginUser loginUser = LoginHelper.getLoginUser();
+        if (loginUser == null) {
+            return;
+        }
         loginUser.setCurrentRole(roleKey);
         StpUtil.getTokenSession().set(LoginHelper.LOGIN_USER_KEY, loginUser);
     }

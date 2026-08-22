@@ -13,8 +13,10 @@ import org.mockito.MockedStatic;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -56,6 +58,13 @@ class SpecialCurrentRoleStoreTest {
         assertEquals("special_parent", SpecialCurrentRoleStore.resolveForGetInfo(
             "", Set.of("special_parent")));
         assertNull(SpecialCurrentRoleStore.resolveForGetInfo(null, Set.of("superadmin")));
+    }
+
+    @Test
+    void shouldPersistRoleRejectsNullSoWriteDoesNotThrow() {
+        assertFalse(SpecialCurrentRoleStore.shouldPersistRole(null));
+        assertTrue(SpecialCurrentRoleStore.shouldPersistRole("special_parent"));
+        assertTrue(SpecialCurrentRoleStore.shouldPersistRole("special_teacher"));
     }
 
     @Test

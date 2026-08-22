@@ -42,6 +42,7 @@ import org.dromara.system.mapper.SysSocialMapper;
 import org.dromara.system.mapper.SysUserMapper;
 import org.dromara.system.service.ISysSocialService;
 import org.dromara.system.service.ISysUserService;
+import org.dromara.special.util.SpecialCurrentRoleStore;
 import org.dromara.web.config.properties.WechatMiniProgramProperties;
 import org.dromara.web.domain.vo.LoginVo;
 import org.dromara.web.service.IAuthStrategy;
@@ -120,6 +121,7 @@ public class XcxAuthStrategy implements IAuthStrategy {
 
         SaLoginParameter model = IAuthStrategy.buildLoginParameter(client);
         LoginHelper.login(loginUser, model);
+        SpecialCurrentRoleStore.applyDefault(client.getClientId(), loginUser.getRolePermission());
 
         LoginVo loginVo = new LoginVo();
         loginVo.setAccessToken(StpUtil.getTokenValue());

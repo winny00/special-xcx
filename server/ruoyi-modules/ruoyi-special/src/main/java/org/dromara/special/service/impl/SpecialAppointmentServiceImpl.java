@@ -108,12 +108,29 @@ public class SpecialAppointmentServiceImpl implements ISpecialAppointmentService
     public Boolean updateByBo(SpecialAppointmentBo bo) {
         SpecialAppointment current = bo.getId() == null ? null : baseMapper.selectById(bo.getId());
         assertOwnsAppointment(current == null ? null : current.getTeacherId());
-        if (SpecialIdentitySupport.currentUserIsTeacherOnly() && current != null) {
-            bo.setTeacherId(current.getTeacherId());
-        }
-        SpecialAppointment update = MapstructUtils.convert(bo, SpecialAppointment.class);
+        SpecialAppointment update = SpecialIdentitySupport.currentUserIsTeacherOnly()
+            ? teacherProcessingUpdate(current, bo)
+            : MapstructUtils.convert(bo, SpecialAppointment.class);
         validEntityBeforeSave(update);
         return baseMapper.updateById(update) > 0;
+    }
+
+    /**
+     * 老师只能改处理状态/备注/处理人，不能改家长身份、资源、联系人或备注。
+     */
+    private SpecialAppointment teacherProcessingUpdate(SpecialAppointment current, SpecialAppointmentBo bo) {
+        SpecialAppointment update = new SpecialAppointment();
+        update.setId(current.getId());
+        if (bo.getAppointStatus() != null) {
+            update.setAppointStatus(bo.getAppointStatus());
+        }
+        if (bo.getHandlerRemark() != null) {
+            update.setHandlerRemark(bo.getHandlerRemark());
+        }
+        if (bo.getHandlerId() != null) {
+            update.setHandlerId(bo.getHandlerId());
+        }
+        return update;
     }
 
     private LambdaQueryWrapper<SpecialAppointment> buildQueryWrapper(SpecialAppointmentBo bo) {

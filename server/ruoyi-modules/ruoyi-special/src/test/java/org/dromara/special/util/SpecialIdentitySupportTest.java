@@ -1,8 +1,10 @@
 package org.dromara.special.util;
 
+import org.dromara.common.satoken.utils.LoginHelper;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import java.util.Set;
 
@@ -11,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mockStatic;
 
 @Tags({@Tag("local"), @Tag("dev"), @Tag("prod")})
 class SpecialIdentitySupportTest {
@@ -60,6 +63,15 @@ class SpecialIdentitySupportTest {
         assertFalse(SpecialIdentitySupport.isTeacherOnly(Set.of("special_teacher", "superadmin")));
         assertFalse(SpecialIdentitySupport.isTeacherOnly(Set.of("superadmin")));
         assertTrue(SpecialIdentitySupport.isSuperAdmin(Set.of("superadmin")));
+    }
+
+    @Test
+    void currentUserIsTeacherOnlyDoesNotSwallowRuntimeFailure() {
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+            helper.when(LoginHelper::getLoginUser).thenThrow(new RuntimeException("auth exploded"));
+            RuntimeException ex = assertThrows(RuntimeException.class, SpecialIdentitySupport::currentUserIsTeacherOnly);
+            assertEquals("auth exploded", ex.getMessage());
+        }
     }
 
     @Test

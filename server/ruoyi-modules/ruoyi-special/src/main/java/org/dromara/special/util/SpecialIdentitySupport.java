@@ -88,16 +88,8 @@ public final class SpecialIdentitySupport {
         return isTeacherOnly(loginUser.getRolePermission());
     }
 
-    /**
-     * 无登录上下文时视为非老师专属，避免单测/公开查询触发 Sa-Token。
-     */
     public static boolean currentUserIsTeacherOnly() {
-        try {
-            return isTeacherOnlyUser(LoginHelper.getLoginUser());
-        }
-        catch (RuntimeException ex) {
-            return false;
-        }
+        return isTeacherOnlyUser(LoginHelper.getLoginUser());
     }
 
     /**

@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Tags;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,9 +27,11 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Tags({@Tag("local"), @Tag("dev"), @Tag("prod")})
@@ -100,6 +103,47 @@ class SpecialAppointmentServiceImplScopeTest {
     }
 
     @Test
+    void teacherOnlyUpdateIgnoresMaliciousParentFields() {
+        SpecialAppointment current = ownedAppointment();
+        when(appointmentMapper.selectById(1L)).thenReturn(current);
+        when(teacherMapper.selectOne(any())).thenReturn(ownTeacher());
+        when(appointmentMapper.updateById(any(SpecialAppointment.class))).thenReturn(1);
+        SpecialAppointmentBo bo = new SpecialAppointmentBo();
+        bo.setId(1L);
+        bo.setAppointStatus(1);
+        bo.setHandlerRemark("已联系");
+        bo.setHandlerId(USER_ID);
+        bo.setUserId(999L);
+        bo.setResourceId(888L);
+        bo.setTeacherId(777L);
+        bo.setContactName("篡改");
+        bo.setContactPhone("13900139000");
+        bo.setChildAge(99);
+        bo.setRemark("篡改备注");
+        ArgumentCaptor<SpecialAppointment> captor = ArgumentCaptor.forClass(SpecialAppointment.class);
+
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+            helper.when(LoginHelper::getLoginUser).thenReturn(teacherLogin());
+            helper.when(LoginHelper::getUserId).thenReturn(USER_ID);
+            service.updateByBo(bo);
+        }
+
+        verify(appointmentMapper).updateById(captor.capture());
+        SpecialAppointment update = captor.getValue();
+        assertEquals(1L, update.getId());
+        assertEquals(1, update.getAppointStatus());
+        assertEquals("已联系", update.getHandlerRemark());
+        assertEquals(USER_ID, update.getHandlerId());
+        assertNull(update.getUserId());
+        assertNull(update.getResourceId());
+        assertNull(update.getTeacherId());
+        assertNull(update.getContactName());
+        assertNull(update.getContactPhone());
+        assertNull(update.getChildAge());
+        assertNull(update.getRemark());
+    }
+
+    @Test
     void teacherOnlyCannotUpdateAnotherTeachersAppointment() {
         SpecialAppointment current = new SpecialAppointment();
         current.setId(1L);
@@ -120,6 +164,27 @@ class SpecialAppointmentServiceImplScopeTest {
             ServiceException ex = assertThrows(ServiceException.class, () -> service.updateByBo(bo));
             assertEquals("没有权限访问", ex.getMessage());
         }
+    }
+
+    private static SpecialTeacher ownTeacher() {
+        SpecialTeacher own = new SpecialTeacher();
+        own.setId(OWN_TEACHER_ID);
+        own.setUserId(USER_ID);
+        return own;
+    }
+
+    private static SpecialAppointment ownedAppointment() {
+        SpecialAppointment current = new SpecialAppointment();
+        current.setId(1L);
+        current.setTeacherId(OWN_TEACHER_ID);
+        current.setUserId(100L);
+        current.setResourceId(200L);
+        current.setContactName("家长");
+        current.setContactPhone("13800138000");
+        current.setChildAge(5);
+        current.setRemark("家长备注");
+        current.setAppointStatus(0);
+        return current;
     }
 
     private static LoginUser teacherLogin() {

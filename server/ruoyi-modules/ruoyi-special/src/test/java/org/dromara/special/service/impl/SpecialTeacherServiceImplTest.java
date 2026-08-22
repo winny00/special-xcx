@@ -176,7 +176,11 @@ class SpecialTeacherServiceImplTest {
         when(baseMapper.selectVoById(1L)).thenReturn(vo);
         when(userService.selectUserByIds(any(), any())).thenReturn(List.of(user(10L, PHONE)));
 
-        SpecialTeacherVo result = service.queryById(1L);
+        SpecialTeacherVo result;
+        try (MockedStatic<LoginHelper> helper = mockStatic(LoginHelper.class)) {
+            helper.when(LoginHelper::getLoginUser).thenReturn(null);
+            result = service.queryById(1L);
+        }
 
         assertEquals(SpecialParentSupport.maskPhone(PHONE), result.getPhone());
         assertNotEquals(PHONE, result.getPhone());

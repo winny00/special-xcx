@@ -31,16 +31,23 @@ public final class SpecialCurrentRoleStore {
     }
 
     /**
-     * 按登录端选择默认角色并写入会话。xcx 且无可切换角色时拒绝。
+     * 校验 xcx 账号已开通，返回应写入的角色。不碰会话。
      */
-    public static void applyDefault(String clientId, Set<String> roleKeys) {
+    public static String requireRoleForLogin(String clientId, Set<String> roleKeys) {
         String roleKey = pickRoleForLogin(clientId, roleKeys);
         if (roleKey == null
             && SpecialIdentitySupport.XCX_CLIENT_ID.equals(clientId)
             && !SpecialIdentitySupport.canAccessPcAdmin(roleKeys)) {
             throw new ServiceException("账号未开通");
         }
-        write(roleKey);
+        return roleKey;
+    }
+
+    /**
+     * 按登录端选择默认角色并写入会话。调用方须先 {@link #requireRoleForLogin}。
+     */
+    public static void applyDefault(String clientId, Set<String> roleKeys) {
+        write(pickRoleForLogin(clientId, roleKeys));
     }
 
     public static void write(String roleKey) {

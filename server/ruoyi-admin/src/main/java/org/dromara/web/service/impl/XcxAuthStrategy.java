@@ -120,8 +120,10 @@ public class XcxAuthStrategy implements IAuthStrategy {
         loginUser.setOpenid(openid);
 
         SaLoginParameter model = IAuthStrategy.buildLoginParameter(client);
+        String currentRole = SpecialCurrentRoleStore.requireRoleForLogin(
+            client.getClientId(), loginUser.getRolePermission());
         LoginHelper.login(loginUser, model);
-        SpecialCurrentRoleStore.applyDefault(client.getClientId(), loginUser.getRolePermission());
+        SpecialCurrentRoleStore.write(currentRole);
 
         LoginVo loginVo = new LoginVo();
         loginVo.setAccessToken(StpUtil.getTokenValue());

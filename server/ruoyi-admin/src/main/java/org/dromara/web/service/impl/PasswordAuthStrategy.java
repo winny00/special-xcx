@@ -79,12 +79,8 @@ public class PasswordAuthStrategy implements IAuthStrategy {
             && !SpecialIdentitySupport.canAccessPcAdmin(loginUser.getRolePermission())) {
             throw new ServiceException("无后台权限");
         }
-        String currentRole = SpecialCurrentRoleStore.pickRoleForLogin(client.getClientId(), loginUser.getRolePermission());
-        if (currentRole == null
-            && SpecialIdentitySupport.XCX_CLIENT_ID.equals(client.getClientId())
-            && !SpecialIdentitySupport.canAccessPcAdmin(loginUser.getRolePermission())) {
-            throw new ServiceException("账号未开通");
-        }
+        String currentRole = SpecialCurrentRoleStore.requireRoleForLogin(
+            client.getClientId(), loginUser.getRolePermission());
         SaLoginParameter model = IAuthStrategy.buildLoginParameter(client);
         // 生成token
         LoginHelper.login(loginUser, model);

@@ -19,6 +19,7 @@ import org.dromara.system.mapper.SysUserMapper;
 import org.dromara.system.mapper.SysUserRoleMapper;
 import org.dromara.system.service.ISysRoleService;
 import org.dromara.system.service.ISysUserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +38,7 @@ public class SpecialParentRegisterService {
     private final SysUserRoleMapper userRoleMapper;
     private final Function<String, String> smsCodeLookup;
 
+    @Autowired
     public SpecialParentRegisterService(
         SysUserMapper userMapper,
         ISysUserService userService,

@@ -21,7 +21,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.lang.reflect.Constructor;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
@@ -63,6 +66,19 @@ class SpecialParentRegisterServiceTest {
         body.setPassword("pass123");
         body.setCode(SMS_CODE);
         body.setClientId(SpecialIdentitySupport.XCX_CLIENT_ID);
+    }
+
+    @Test
+    void productionConstructorIsAutowiredForSpring() {
+        Constructor<?> production = Arrays.stream(SpecialParentRegisterService.class.getDeclaredConstructors())
+            .filter(ctor -> ctor.getParameterCount() == 4)
+            .findFirst()
+            .orElseThrow();
+        assertTrue(production.isAnnotationPresent(Autowired.class));
+        long autowiredCount = Arrays.stream(SpecialParentRegisterService.class.getDeclaredConstructors())
+            .filter(ctor -> ctor.isAnnotationPresent(Autowired.class))
+            .count();
+        assertEquals(1, autowiredCount);
     }
 
     @Test

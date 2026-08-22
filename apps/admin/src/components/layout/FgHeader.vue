@@ -9,6 +9,7 @@ defineProps<{
 const emit = defineEmits<{
   'toggle-collapse': []
   logout: []
+  refresh: []
 }>()
 
 function onLogout() {
@@ -35,7 +36,20 @@ function onLogout() {
       </button>
     </div>
     <div class="fg-header__center">
-      <FgBreadcrumb />
+      <div class="fg-header__crumbs">
+        <FgBreadcrumb />
+      </div>
+      <button
+        type="button"
+        class="fg-header__refresh"
+        aria-label="刷新当前页"
+        @click="emit('refresh')"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-3-6.7" />
+          <path d="M21 3v6h-6" />
+        </svg>
+      </button>
     </div>
     <div class="fg-header__right">
       <FgUserDropdown @logout="onLogout" />
@@ -58,9 +72,60 @@ function onLogout() {
 }
 
 .fg-header__center {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.fg-header__crumbs {
   flex: 1;
   min-width: 0;
   overflow: hidden;
+}
+
+.fg-header__refresh {
+  flex: 0 0 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: var(--fg-radius-sm);
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.fg-header__refresh svg {
+  width: 18px;
+  height: 18px;
+}
+
+.fg-header__center:hover .fg-header__refresh,
+.fg-header__refresh:focus-visible {
+  opacity: 1;
+}
+
+.fg-header__refresh:hover {
+  color: var(--fg-primary);
+  background: var(--fg-primary-soft);
+}
+
+@media (pointer: coarse) {
+  .fg-header__refresh {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fg-header__refresh {
+    transition: none;
+  }
 }
 
 .fg-header__right {

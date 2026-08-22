@@ -24,10 +24,10 @@ const activeCategory = ref('')
 const keyword = ref('')
 
 const shortcuts = [
-  { label: '课程', icon: 'i-carbon-education', action: 'course' },
-  { label: '老师', icon: 'i-carbon-user', action: 'teacher' },
-  { label: '找机构', icon: 'i-carbon-building', action: 'org' },
-  { label: '预约咨询', icon: 'i-carbon-calendar', action: 'appoint' },
+  { label: '课程', image: '/static/shortcuts/course.png', action: 'course' },
+  { label: '老师', image: '/static/shortcuts/teacher.png', action: 'teacher' },
+  { label: '找机构', image: '/static/shortcuts/org.png', action: 'org' },
+  { label: '预约咨询', image: '/static/shortcuts/appoint.png', action: 'appoint' },
 ]
 
 async function loadResources() {
@@ -142,17 +142,19 @@ onLoad(() => {
       </view>
     </view>
 
-    <view class="mx-3 -mt-1 flex fg-surface-card px-2 py-4">
+    <view class="shortcut-row mx-3 -mt-1 fg-surface-card px-2 py-4">
       <view
         v-for="item in shortcuts"
         :key="item.action"
         class="shortcut-item fg-tap-active"
         @click="goShortcut(item.action)"
       >
-        <view class="shortcut-icon">
-          <text :class="item.icon" />
-        </view>
-        <text class="text-xs text-[#1C2B28]">{{ item.label }}</text>
+        <image
+          class="shortcut-icon"
+          :src="item.image"
+          mode="aspectFit"
+        />
+        <text class="shortcut-label">{{ item.label }}</text>
       </view>
     </view>
 
@@ -244,24 +246,38 @@ onLoad(() => {
 </template>
 
 <style scoped lang="scss">
+.shortcut-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
 .shortcut-item {
-  display: inline-flex;
+  display: flex;
+  flex: 1 1 0;
   width: 25%;
+  min-width: 0;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
+  text-align: center;
   min-height: 44px;
+  box-sizing: border-box;
 }
 .shortcut-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 56px;
+  height: 56px;
   margin-bottom: 6px;
-  border-radius: 50%;
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-  font-size: 20px;
+  flex-shrink: 0;
+}
+.shortcut-label {
+  display: block;
+  width: 100%;
+  min-height: 18px;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: #1c2b28;
 }
 .category-pill {
   display: inline-flex;

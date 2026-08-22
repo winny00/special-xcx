@@ -5,11 +5,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   addTeacher,
   deleteTeachers,
+  listOrganizations,
   listTeachers,
   updateTeacher,
+  type SpecialOrganization,
   type SpecialTeacher,
 } from '@/api/special'
 import FgCoverUpload from '@/components/FgCoverUpload.vue'
+import { buildTeacherPayload } from '@/utils/teacher-payload'
 
 const route = useRoute()
 const loading = ref(false)
@@ -24,6 +27,7 @@ const query = reactive({
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增老师')
+const orgOptions = ref<{ id: string, name: string }[]>([])
 const form = reactive<SpecialTeacher>({
   name: '',
   title: '',
@@ -35,6 +39,33 @@ const form = reactive<SpecialTeacher>({
   intro: '',
   status: 0,
 })
+
+function orgOptionId(org: SpecialOrganization) {
+  return org.id == null ? '' : String(org.id)
+}
+
+function mergeOrgOption(id: string, name?: string) {
+  if (!id || orgOptions.value.some(item => item.id === id))
+    return
+  orgOptions.value = [...orgOptions.value, { id, name: name || `机构 ${id}` }]
+}
+
+async function fetchOrgOptions() {
+  try {
+    const res = await listOrganizations({
+      pageNum: 1,
+      pageSize: 200,
+      auditStatus: 1,
+      status: 1,
+    })
+    orgOptions.value = res.rows
+      .map(org => ({ id: orgOptionId(org), name: org.name }))
+      .filter(item => item.id)
+  }
+  catch {
+    orgOptions.value = []
+  }
+}
 
 const statusMap: Record<number, { label: string, type: 'info' | 'success' | 'warning' }> = {
   0: { label: '待审', type: 'info' },
@@ -96,7 +127,10 @@ function handleAdd() {
 }
 
 function handleEdit(row: SpecialTeacher) {
-  Object.assign(form, { ...row, id: rowId(row), orgId: row.orgId ? String(row.orgId) : '' })
+  const orgId = row.orgId ? String(row.orgId) : ''
+  Object.assign(form, { ...row, id: rowId(row), orgId })
+  if (orgId)
+    mergeOrgOption(orgId)
   dialogTitle.value = '编辑老师'
   dialogVisible.value = true
 }
@@ -106,7 +140,14 @@ async function handleSubmit() {
     ElMessage.warning('请输入姓名')
     return
   }
-  const payload = { ...form, orgId: form.orgId || undefined }
+  let payload: SpecialTeacher
+  try {
+    payload = buildTeacherPayload(form)
+  }
+  catch (error) {
+    ElMessage.warning(error instanceof Error ? error.message : '请选择已有机构')
+    return
+  }
   if (form.id) {
     await updateTeacher(payload)
     ElMessage.success('更新成功')
@@ -135,7 +176,7 @@ watch(() => route.query.editId, (editId) => {
 })
 
 onMounted(async () => {
-  await fetchList()
+  await Promise.all([fetchList(), fetchOrgOptions()])
   const editId = route.query.editId
   if (editId) {
     const row = tableData.value.find(item => String(item.id) === String(editId))
@@ -238,8 +279,21 @@ onMounted(async () => {
       <el-form-item label="证书图">
         <FgCoverUpload v-model="form.certImageUrl" />
       </el-form-item>
-      <el-form-item label="机构ID">
-        <el-input v-model="form.orgId" placeholder="可选，关联已有机构雪花 ID" />
+      <el-form-item label="所属机构">
+        <el-select
+          v-model="form.orgId"
+          clearable
+          filterable
+          placeholder="选择已入驻机构（可选）"
+          style="width: 100%"
+        >
+          <el-option
+            v-for="org in orgOptions"
+            :key="org.id"
+            :label="org.name"
+            :value="org.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="简介">
         <el-input v-model="form.intro" type="textarea" :rows="4" />

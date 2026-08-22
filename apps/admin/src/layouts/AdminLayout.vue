@@ -6,14 +6,20 @@ import FgHeader from '@/components/layout/FgHeader.vue'
 import FgTabsBar from '@/components/layout/FgTabsBar.vue'
 import { useTabsStore } from '@/stores/tabs'
 import { useAuthStore } from '@/store/auth'
+import { incrementRefreshTick, viewRefreshKey } from '@/utils/view-refresh'
 
 const SIDEBAR_KEY = 'admin-sidebar-collapsed'
 const collapsed = ref(localStorage.getItem(SIDEBAR_KEY) === '1')
 const asideWidth = computed(() => (collapsed.value ? '64px' : '220px'))
+const refreshTick = ref(0)
 const route = useRoute()
 const router = useRouter()
 const tabsStore = useTabsStore()
 const auth = useAuthStore()
+
+function handleRefresh() {
+  refreshTick.value = incrementRefreshTick(refreshTick.value)
+}
 
 function toggleSidebar() {
   collapsed.value = !collapsed.value
@@ -46,12 +52,12 @@ onMounted(() => {
       <FgSidebar :collapsed="collapsed" />
     </el-aside>
     <el-container class="layout-main" direction="vertical">
-      <FgHeader :collapsed="collapsed" @toggle-collapse="toggleSidebar" @logout="handleLogout" />
+      <FgHeader :collapsed="collapsed" @toggle-collapse="toggleSidebar" @logout="handleLogout" @refresh="handleRefresh" />
       <FgTabsBar />
       <el-main class="main">
         <router-view v-slot="{ Component, route: r }">
           <keep-alive :max="10">
-            <component :is="Component" :key="r.path" />
+            <component :is="Component" :key="viewRefreshKey(r.path, refreshTick)" />
           </keep-alive>
         </router-view>
       </el-main>

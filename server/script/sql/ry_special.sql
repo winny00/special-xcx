@@ -54,9 +54,10 @@ CREATE TABLE IF NOT EXISTS special_organization (
 -- 预约/咨询申请表
 CREATE TABLE IF NOT EXISTS special_appointment (
     id              bigint(20)      NOT NULL                    COMMENT '主键',
-    resource_id     bigint(20)      NOT NULL                    COMMENT '关联资源ID',
+    resource_id     bigint(20)      DEFAULT NULL                COMMENT '关联资源ID',
     resource_title  varchar(200)    DEFAULT NULL                COMMENT '资源标题快照',
     user_id         bigint(20)      DEFAULT NULL                COMMENT '申请人用户ID',
+    teacher_id      bigint(20)      DEFAULT NULL                COMMENT '老师档案ID',
     contact_name    varchar(50)     NOT NULL                    COMMENT '联系人',
     contact_phone   varchar(20)     NOT NULL                    COMMENT '联系电话',
     child_age       varchar(20)     DEFAULT NULL                COMMENT '儿童年龄',
@@ -202,6 +203,29 @@ INSERT INTO sys_menu VALUES (1764000000000000072, '老师新增', 17640000000000
 INSERT INTO sys_menu VALUES (1764000000000000073, '老师修改', 1764000000000000008, 3, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:teacher:edit', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '老师修改';
 INSERT INTO sys_menu VALUES (1764000000000000074, '老师删除', 1764000000000000008, 4, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:teacher:remove', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '老师删除';
 INSERT INTO sys_menu VALUES (1764000000000000075, '老师列表', 1764000000000000008, 5, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:teacher:list', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '老师列表';
+
+INSERT INTO sys_menu VALUES (1764000000000000009, '用户角色', 1764000000000000001, 6, 'account', 'special/account/index', '', 'N', 'Y', 'C', '0', '0', 'special:account:list', 'peoples', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '用户角色';
+INSERT INTO sys_menu VALUES (1764000000000000081, '用户角色查询', 1764000000000000009, 1, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:account:list', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '用户角色查询';
+INSERT INTO sys_menu VALUES (1764000000000000082, '用户角色编辑', 1764000000000000009, 2, '', '', '', 'N', 'Y', 'F', '0', '0', 'special:account:edit', '#', '', '', 1761000000000000103, 1761100000000000001, sysdate(), null, null, '') ON DUPLICATE KEY UPDATE menu_name = '用户角色编辑';
+
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT 1763000000000000002, 1764000000000000071 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1763000000000000002 AND menu_id = 1764000000000000071);
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT 1763000000000000002, 1764000000000000073 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1763000000000000002 AND menu_id = 1764000000000000073);
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT 1763000000000000002, 1764000000000000075 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1763000000000000002 AND menu_id = 1764000000000000075);
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT 1763000000000000002, 1764000000000000004 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1763000000000000002 AND menu_id = 1764000000000000004);
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT 1763000000000000002, 1764000000000000031 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1763000000000000002 AND menu_id = 1764000000000000031);
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT 1763000000000000002, 1764000000000000032 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 1763000000000000002 AND menu_id = 1764000000000000032);
 
 INSERT INTO special_article VALUES
 (1768000000000000001, '广东省特殊教育提升计划解读', '梳理省内特教资源布局与入学支持政策要点。', '<p>本文介绍广东省特殊教育提升计划的核心目标：扩大特教学位供给、加强融合教育支持、完善评估与转衔服务。</p><p>家长可关注当地教育局发布的入学指南与康复补贴申请渠道。</p>', null, 'policy', 1, sysdate(), 128, 1761000000000000103, 1761100000000000001, sysdate(), null, null, '0'),

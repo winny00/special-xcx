@@ -1,5 +1,6 @@
 package org.dromara.web.controller;
 
+import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -18,6 +19,7 @@ import org.dromara.common.core.utils.DateUtils;
 import org.dromara.common.core.utils.MessageUtils;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.core.utils.ValidatorUtils;
+import org.dromara.common.core.validate.RegisterGroup;
 import org.dromara.common.encrypt.annotation.ApiEncrypt;
 import org.dromara.common.json.utils.JsonUtils;
 import org.dromara.common.satoken.utils.LoginHelper;
@@ -26,9 +28,13 @@ import org.dromara.common.social.config.properties.SocialProperties;
 import org.dromara.common.social.utils.SocialUtils;
 import org.dromara.system.api.MessageService;
 import org.dromara.system.api.domain.PushPayloadDTO;
+import org.dromara.system.api.model.LoginUser;
 import org.dromara.system.api.model.RegisterBody;
 import org.dromara.system.api.model.SocialLoginBody;
 import org.dromara.system.domain.vo.SysClientVo;
+import org.dromara.special.service.impl.SpecialParentRegisterService;
+import org.dromara.special.util.SpecialCurrentRoleStore;
+import org.dromara.special.util.SpecialIdentitySupport;
 import org.dromara.system.service.ISysClientService;
 import org.dromara.system.service.ISysConfigService;
 import org.dromara.system.service.ISysSocialService;
@@ -41,6 +47,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -64,6 +71,7 @@ public class AuthController {
     private final ISysClientService clientService;
     private final ScheduledExecutorService scheduledExecutorService;
     private final MessageService messageService;
+    private final SpecialParentRegisterService parentRegisterService;
 
 
     /**
@@ -179,11 +187,35 @@ public class AuthController {
      */
     @ApiEncrypt
     @PostMapping("/register")
-    public R<Void> register(@Validated @RequestBody RegisterBody user) {
+    public R<Void> register(@Validated(RegisterGroup.class) @RequestBody RegisterBody user) {
+        if (SpecialIdentitySupport.XCX_CLIENT_ID.equals(user.getClientId())) {
+            parentRegisterService.register(user);
+            return R.ok();
+        }
         if (!configService.selectRegisterEnabled()) {
             return R.fail("当前系统没有开启注册功能！");
         }
         registerService.register(user);
+        return R.ok();
+    }
+
+    /**
+     * 切换当前身份（家长 / 老师）。类上 {@link SaIgnore}，本方法必须登录。
+     *
+     * @param body {@code roleKey} 为目标身份
+     * @return 成功或「当前账号没有该身份」
+     */
+    @SaCheckLogin
+    @PutMapping("/current-role")
+    public R<Void> switchCurrentRole(@RequestBody Map<String, String> body) {
+        StpUtil.checkLogin();
+        String roleKey = body.get("roleKey");
+        LoginUser loginUser = LoginHelper.getLoginUser();
+        String error = SpecialIdentitySupport.switchError(loginUser.getRolePermission(), roleKey);
+        if (error != null) {
+            return R.fail(error);
+        }
+        SpecialCurrentRoleStore.write(roleKey);
         return R.ok();
     }
 

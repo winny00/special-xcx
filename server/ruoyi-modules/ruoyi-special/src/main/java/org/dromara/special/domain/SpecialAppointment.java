@@ -44,6 +44,11 @@ public class SpecialAppointment extends BaseEntity {
     private Long userId;
 
     /**
+     * 老师档案ID
+     */
+    private Long teacherId;
+
+    /**
      * 联系人
      */
     private String contactName;

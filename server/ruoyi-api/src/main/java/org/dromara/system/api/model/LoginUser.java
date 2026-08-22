@@ -134,6 +134,11 @@ public class LoginUser implements Serializable {
     private String deviceType;
 
     /**
+     * 当前身份（家长 / 老师），存在 Sa-Token 会话
+     */
+    private String currentRole;
+
+    /**
      * 获取 Sa-Token 使用的登录标识。
      *
      * @return 登录标识

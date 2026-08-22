@@ -26,13 +26,15 @@ export type IAuthLoginRes = ISingleTokenRes | IDoubleTokenRes
 export type UserRole = string
 
 export interface IUserInfoRes {
-  userId: number
+  userId: string
   username: string
   nickname: string
   avatar?: string
   /** 同时支持单角色和多角色，你自行选择一种就行 */
   role?: UserRole
   roles?: UserRole[]
+  currentRole?: string
+  phoneBound?: boolean
   [key: string]: any // 允许其他扩展字段
 }
 

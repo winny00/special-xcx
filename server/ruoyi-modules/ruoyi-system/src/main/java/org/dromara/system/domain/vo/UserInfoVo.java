@@ -27,4 +27,14 @@ public class UserInfoVo {
      */
     private Set<String> roles;
 
+    /**
+     * 当前身份（家长 / 老师）
+     */
+    private String currentRole;
+
+    /**
+     * 是否已绑定手机号
+     */
+    private Boolean phoneBound;
+
 }

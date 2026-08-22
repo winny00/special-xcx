@@ -328,6 +328,8 @@ special:
     # 替换为微信公众平台申请的小程序 AppID / AppSecret
     app-id: wxf70d043d359a1586
     app-secret: b5de3db805f9b6f14880197b5bd18696
+  sms:
+    test-code-enabled: true
   oss:
     # 二期文件存储开关（仅文档/特性标记；实际上传走 sys_oss_config，见 Admin「系统管理 → 对象存储配置」）
     # 本地开发：cd server/script/docker && docker compose up -d minio

@@ -1,5 +1,9 @@
 <script lang="ts" setup>
 import { createAppointment } from '@/api/special'
+import { BIND_PHONE_PAGE, LOGIN_PAGE } from '@/router/config'
+import { useUserStore } from '@/store'
+import { useTokenStore } from '@/store/token'
+import { isPhoneBound } from '@/utils/current-role'
 
 definePage({
   style: {
@@ -7,7 +11,10 @@ definePage({
   },
 })
 
+const tokenStore = useTokenStore()
+const userStore = useUserStore()
 const resourceId = ref('')
+const teacherId = ref('')
 const resourceTitle = ref('')
 const contactName = ref('')
 const contactPhone = ref('')
@@ -15,7 +22,38 @@ const childAge = ref('')
 const remark = ref('')
 const submitting = ref(false)
 
+function currentPageUrl() {
+  const parts: string[] = []
+  if (resourceTitle.value) {
+    parts.push(`title=${encodeURIComponent(resourceTitle.value)}`)
+  }
+  if (teacherId.value) {
+    parts.push(`teacherId=${teacherId.value}`)
+  }
+  if (resourceId.value) {
+    parts.push(`resourceId=${resourceId.value}`)
+  }
+  return parts.length ? `/pages/resource/appointment?${parts.join('&')}` : '/pages/resource/appointment'
+}
+
+function requirePhoneBound() {
+  if (!tokenStore.hasLogin) {
+    uni.navigateTo({ url: LOGIN_PAGE })
+    return false
+  }
+  if (!isPhoneBound(userStore.userInfo.phoneBound)) {
+    uni.navigateTo({
+      url: `${BIND_PHONE_PAGE}?redirect=${encodeURIComponent(currentPageUrl())}`,
+    })
+    return false
+  }
+  return true
+}
+
 async function submit() {
+  if (!requirePhoneBound()) {
+    return
+  }
   if (!contactName.value.trim()) {
     uni.showToast({ title: '请填写联系人', icon: 'none' })
     return
@@ -24,10 +62,15 @@ async function submit() {
     uni.showToast({ title: '请填写联系电话', icon: 'none' })
     return
   }
+  if (!resourceId.value && !teacherId.value) {
+    uni.showToast({ title: '请选择资源或老师', icon: 'none' })
+    return
+  }
   submitting.value = true
   try {
     await createAppointment({
-      resourceId: resourceId.value,
+      ...(resourceId.value ? { resourceId: resourceId.value } : {}),
+      ...(teacherId.value ? { teacherId: teacherId.value } : {}),
       resourceTitle: resourceTitle.value,
       contactName: contactName.value,
       contactPhone: contactPhone.value,
@@ -47,7 +90,9 @@ async function submit() {
 
 onLoad((query) => {
   resourceId.value = String(query?.resourceId || '')
+  teacherId.value = String(query?.teacherId || '')
   resourceTitle.value = decodeURIComponent((query?.title as string) || '')
+  requirePhoneBound()
 })
 </script>
 

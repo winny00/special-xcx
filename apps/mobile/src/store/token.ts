@@ -8,10 +8,12 @@ import {
   login as _login,
   logout as _logout,
   refreshToken as _refreshToken,
+  switchCurrentRole,
   wxLogin as _wxLogin,
   getWxCode,
 } from '@/api/login'
 import { isDoubleTokenRes, isSingleTokenRes } from '@/api/types/login'
+import { clearCurrentRole, planColdStartRole, readCachedRole, syncCachedRole, writeCachedRole } from '@/utils/current-role'
 import { useUserStore } from './user'
 
 /**
@@ -109,7 +111,8 @@ export const useTokenStore = defineStore(
     async function _postLogin(tokenInfo: IAuthLoginRes) {
       setTokenInfo(tokenInfo)
       const userStore = useUserStore()
-      await userStore.fetchUserInfo()
+      const info = await userStore.fetchUserInfo()
+      syncCachedRole(info.roles ?? [])
     }
 
     /**
@@ -203,6 +206,7 @@ export const useTokenStore = defineStore(
         console.log('退出登录-清除用户信息')
         tokenInfo.value = { ...tokenInfoState }
         uni.removeStorageSync('token')
+        clearCurrentRole()
         const userStore = useUserStore()
         userStore.clearUserInfo()
       }
@@ -302,11 +306,51 @@ export const useTokenStore = defineStore(
       return getValidToken.value
     }
 
+    const restoreSessionRole = async () => {
+      updateNowTime()
+      if (!hasValidLogin.value) {
+        return
+      }
+      try {
+        const userStore = useUserStore()
+        const info = await userStore.fetchUserInfo()
+        const plan = planColdStartRole(readCachedRole(), info.roles ?? [], info.currentRole)
+        if (!plan.role) {
+          clearCurrentRole()
+          return
+        }
+        if (plan.shouldPut) {
+          try {
+            await switchCurrentRole(plan.role)
+          }
+          catch (error) {
+            console.error('恢复身份失败', error)
+            const fallback = planColdStartRole('', info.roles ?? [], info.currentRole)
+            if (fallback.role) {
+              if (fallback.shouldPut) {
+                await switchCurrentRole(fallback.role)
+              }
+              writeCachedRole(fallback.role)
+            }
+            else {
+              clearCurrentRole()
+            }
+            return
+          }
+        }
+        writeCachedRole(plan.role)
+      }
+      catch (error) {
+        console.error('冷启动恢复身份失败', error)
+      }
+    }
+
     return {
       // 核心API方法
       login,
       wxLogin,
       logout,
+      restoreSessionRole,
 
       // 认证状态判断（最常用的）
       hasLogin: hasValidLogin,

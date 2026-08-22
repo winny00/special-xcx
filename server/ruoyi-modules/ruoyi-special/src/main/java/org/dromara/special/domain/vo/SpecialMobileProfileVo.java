@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 移动端家长资料视图
@@ -45,5 +46,20 @@ public class SpecialMobileProfileVo implements Serializable {
      * 角色名称
      */
     private String roleName;
+
+    /**
+     * 会话当前身份
+     */
+    private String currentRole;
+
+    /**
+     * 已开通角色
+     */
+    private List<String> roles;
+
+    /**
+     * 是否已绑定手机号
+     */
+    private Boolean phoneBound;
 
 }

@@ -35,12 +35,32 @@ class SpecialAppointmentBoValidationTest {
     }
 
     @Test
-    void addStillRequiresResourceId() {
+    void addWithOnlyTeacherIdIsValid() {
+        SpecialAppointmentBo bo = new SpecialAppointmentBo();
+        bo.setTeacherId(9001L);
+        bo.setContactName("aaa");
+        bo.setContactPhone("18878787878");
+        Set<ConstraintViolation<SpecialAppointmentBo>> violations = validator.validate(bo, AddGroup.class);
+        assertTrue(violations.isEmpty(), () -> violations.iterator().next().getMessage());
+    }
+
+    @Test
+    void addWithOnlyResourceIdIsValid() {
+        SpecialAppointmentBo bo = new SpecialAppointmentBo();
+        bo.setResourceId(8001L);
+        bo.setContactName("aaa");
+        bo.setContactPhone("18878787878");
+        Set<ConstraintViolation<SpecialAppointmentBo>> violations = validator.validate(bo, AddGroup.class);
+        assertTrue(violations.isEmpty(), () -> violations.iterator().next().getMessage());
+    }
+
+    @Test
+    void addRejectsWhenBothResourceIdAndTeacherIdMissing() {
         SpecialAppointmentBo bo = new SpecialAppointmentBo();
         bo.setContactName("aaa");
         bo.setContactPhone("18878787878");
         Set<ConstraintViolation<SpecialAppointmentBo>> violations = validator.validate(bo, AddGroup.class);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> "资源ID不能为空".equals(v.getMessage())));
+        assertTrue(violations.stream().anyMatch(v -> "资源ID和老师ID不能同时为空".equals(v.getMessage())));
     }
 }

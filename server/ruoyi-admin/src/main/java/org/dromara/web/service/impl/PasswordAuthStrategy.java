@@ -10,6 +10,7 @@ import org.dromara.common.core.constant.Constants;
 import org.dromara.common.core.constant.GlobalConstants;
 import org.dromara.common.core.constant.SystemConstants;
 import org.dromara.common.core.enums.LoginType;
+import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.exception.user.CaptchaException;
 import org.dromara.common.core.exception.user.CaptchaExpireException;
 import org.dromara.common.core.exception.user.UserException;
@@ -20,6 +21,8 @@ import org.dromara.common.json.utils.JsonUtils;
 import org.dromara.common.redis.utils.RedisUtils;
 import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.common.web.config.properties.CaptchaProperties;
+import org.dromara.special.util.SpecialCurrentRoleStore;
+import org.dromara.special.util.SpecialIdentitySupport;
 import org.dromara.system.api.model.LoginUser;
 import org.dromara.system.api.model.PasswordLoginBody;
 import org.dromara.system.domain.SysUser;
@@ -66,15 +69,22 @@ public class PasswordAuthStrategy implements IAuthStrategy {
         if (captchaEnabled) {
             validateCaptcha(username, code, uuid);
         }
-        SysUserVo user = loadUserByUsername(username);
+        SysUserVo user = loadUserByUsernameOrPhone(username);
         loginService.checkLogin(LoginType.PASSWORD, username, () -> !BCrypt.checkpw(password, user.getPassword()));
         // 此处可根据登录用户的数据不同 自行创建 loginUser
         LoginUser loginUser = loginService.buildLoginUser(user);
         loginUser.setClientKey(client.getClientKey());
         loginUser.setDeviceType(client.getDeviceType());
+        if (SpecialIdentitySupport.PC_CLIENT_ID.equals(client.getClientId())
+            && !SpecialIdentitySupport.canAccessPcAdmin(loginUser.getRolePermission())) {
+            throw new ServiceException("无后台权限");
+        }
+        String currentRole = SpecialCurrentRoleStore.requireRoleForLogin(
+            client.getClientId(), loginUser.getRolePermission());
         SaLoginParameter model = IAuthStrategy.buildLoginParameter(client);
         // 生成token
         LoginHelper.login(loginUser, model);
+        SpecialCurrentRoleStore.write(currentRole);
 
         LoginVo loginVo = new LoginVo();
         loginVo.setAccessToken(StpUtil.getTokenValue());
@@ -102,6 +112,23 @@ public class PasswordAuthStrategy implements IAuthStrategy {
             loginService.recordLoginInfo(username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error"));
             throw new CaptchaException();
         }
+    }
+
+    /**
+     * 11 位数字先按手机号查，否则按用户名查。
+     */
+    private SysUserVo loadUserByUsernameOrPhone(String username) {
+        if (SpecialIdentitySupport.isPhoneLogin(username)) {
+            SysUserVo byPhone = userMapper.lambda().eq(SysUser::getPhoneNumber, username).voOne();
+            if (byPhone == null) {
+                return loadUserByUsername(username);
+            }
+            if (SystemConstants.DISABLE.equals(byPhone.getStatus())) {
+                throw new UserException("user.blocked", username);
+            }
+            return byPhone;
+        }
+        return loadUserByUsername(username);
     }
 
     /**

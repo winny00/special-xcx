@@ -10,6 +10,9 @@ export const isNeedLoginMode = LOGIN_STRATEGY === LOGIN_STRATEGY_MAP.DEFAULT_NEE
 
 export const LOGIN_PAGE = '/pages/auth/login'
 export const REGISTER_PAGE = '/pages/auth/register'
+export const BIND_PHONE_PAGE = '/pages/auth/bind-phone'
+export const TEACHER_PROFILE_PAGE = '/pages/me/teacher-profile'
+export const APPOINTMENTS_PAGE = '/pages/me/appointments'
 
 export const LOGIN_PAGE_LIST = [LOGIN_PAGE, REGISTER_PAGE]
 

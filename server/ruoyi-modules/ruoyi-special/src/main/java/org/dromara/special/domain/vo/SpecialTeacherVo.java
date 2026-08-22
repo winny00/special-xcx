@@ -1,5 +1,6 @@
 package org.dromara.special.domain.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
 import org.dromara.special.domain.SpecialTeacher;
@@ -18,8 +19,10 @@ public class SpecialTeacherVo implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long userId;
 
     private String name;
@@ -34,16 +37,24 @@ public class SpecialTeacherVo implements Serializable {
 
     private String avatarUrl;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long orgId;
 
     private String intro;
 
     private Integer status;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long resourceId;
+
+    /**
+     * 已绑账号的手机号（来自 sys_user，非档案表字段）
+     */
+    private String phone;
 
     private String auditRemark;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long auditBy;
 
     private LocalDateTime auditTime;

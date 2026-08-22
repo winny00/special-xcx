@@ -46,4 +46,14 @@ public class SpecialTeacherBo implements Serializable {
     private Integer status;
 
     private Long resourceId;
+
+    /**
+     * 开通登录用手机号（不落老师档案表）
+     */
+    private String phone;
+
+    /**
+     * 新建登录账号时的初始密码（不落老师档案表）
+     */
+    private String initPassword;
 }

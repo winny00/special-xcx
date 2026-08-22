@@ -23,6 +23,7 @@ describe('buildTeacherPayload', () => {
     const payload = buildTeacherPayload({
       ...screenshotForm,
       orgId: '',
+      initPassword: 'Abcd1234',
     })
     expect(payload).not.toHaveProperty('certImageUrl')
     expect(payload.avatarUrl).toBe('https://winny.oss-cn-beijing.aliyuncs.com/special/avatar.png')
@@ -34,7 +35,20 @@ describe('buildTeacherPayload', () => {
     const payload = buildTeacherPayload({
       ...screenshotForm,
       orgId: '1938123456789012345',
+      initPassword: 'Abcd1234',
     })
     expect(payload.orgId).toBe('1938123456789012345')
+  })
+
+  it('requires initPassword on create', () => {
+    expect(() => buildTeacherPayload({ name: '周老师', status: 0, phone: '13800138000' }))
+      .toThrow('请填写初始密码')
+  })
+  it('keeps phone as string', () => {
+    const payload = buildTeacherPayload({
+      name: '周老师', status: 0, phone: '13800138000', initPassword: 'Abcd1234',
+    })
+    expect(payload.phone).toBe('13800138000')
+    expect(payload.initPassword).toBe('Abcd1234')
   })
 })

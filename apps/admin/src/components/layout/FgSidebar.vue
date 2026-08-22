@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/store/auth'
+import { isTeacherOnly } from '@/utils/admin-access'
 
 defineProps<{
   collapsed: boolean
 }>()
 
 const route = useRoute()
+const auth = useAuthStore()
 const activeMenu = computed(() => route.path)
+const teacherOnly = computed(() => isTeacherOnly(auth.roles))
 </script>
 
 <template>
@@ -32,13 +36,25 @@ const activeMenu = computed(() => route.path)
       router
       class="side-menu"
     >
-      <el-menu-item index="/dashboard">
+      <el-menu-item v-if="teacherOnly" index="/teacher/me">
+        <i class="menu-svg" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+        </i>
+        <template #title>我的资料</template>
+      </el-menu-item>
+      <el-menu-item v-if="teacherOnly" index="/appointment">
+        <i class="menu-svg" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+        </i>
+        <template #title>我的预约</template>
+      </el-menu-item>
+      <el-menu-item v-if="!teacherOnly" index="/dashboard">
         <i class="menu-svg" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" /></svg>
         </i>
         <template #title>数据概览</template>
       </el-menu-item>
-      <el-sub-menu index="resource-group">
+      <el-sub-menu v-if="!teacherOnly" index="resource-group">
         <template #title>
           <i class="menu-svg" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
@@ -50,37 +66,43 @@ const activeMenu = computed(() => route.path)
         <el-menu-item index="/resource/teacher">老师资源</el-menu-item>
         <el-menu-item index="/resource/assessment">评估管理</el-menu-item>
       </el-sub-menu>
-      <el-menu-item index="/organization">
+      <el-menu-item v-if="!teacherOnly" index="/organization">
         <i class="menu-svg" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /></svg>
         </i>
         <template #title>机构管理</template>
       </el-menu-item>
-      <el-menu-item index="/teacher">
+      <el-menu-item v-if="!teacherOnly" index="/teacher">
         <i class="menu-svg" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
         </i>
         <template #title>老师档案</template>
       </el-menu-item>
-      <el-menu-item index="/article">
+      <el-menu-item v-if="!teacherOnly" index="/article">
         <i class="menu-svg" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5" /></svg>
         </i>
         <template #title>资讯管理</template>
       </el-menu-item>
-      <el-menu-item index="/appointment">
+      <el-menu-item v-if="!teacherOnly" index="/appointment">
         <i class="menu-svg" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
         </i>
         <template #title>预约管理</template>
       </el-menu-item>
-      <el-menu-item index="/parent">
+      <el-menu-item v-if="!teacherOnly" index="/parent">
         <i class="menu-svg" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
         </i>
         <template #title>家长管理</template>
       </el-menu-item>
-      <el-menu-item index="/audit">
+      <el-menu-item v-if="!teacherOnly" index="/account">
+        <i class="menu-svg" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+        </i>
+        <template #title>用户角色</template>
+      </el-menu-item>
+      <el-menu-item v-if="!teacherOnly" index="/audit">
         <i class="menu-svg" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
         </i>

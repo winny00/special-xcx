@@ -1,6 +1,10 @@
 <script lang="ts" setup>
 import type { ISpecialTeacher } from '@/api/types/special'
 import { getTeacherDetail } from '@/api/special'
+import { BIND_PHONE_PAGE, LOGIN_PAGE } from '@/router/config'
+import { useUserStore } from '@/store'
+import { useTokenStore } from '@/store/token'
+import { isPhoneBound } from '@/utils/current-role'
 
 definePage({
   style: {
@@ -8,6 +12,8 @@ definePage({
   },
 })
 
+const tokenStore = useTokenStore()
+const userStore = useUserStore()
 const teacher = ref<ISpecialTeacher | null>(null)
 const loading = ref(true)
 const teacherId = ref('')
@@ -38,6 +44,29 @@ function goBack() {
     return
   }
   uni.navigateTo({ url: '/pages/teacher/list' })
+}
+
+function goAppointment() {
+  if (!teacher.value) {
+    return
+  }
+  if (!tokenStore.hasLogin) {
+    uni.navigateTo({ url: LOGIN_PAGE })
+    return
+  }
+  const title = encodeURIComponent(teacher.value.name || '')
+  const tid = teacher.value.id
+  let url = `/pages/resource/appointment?title=${title}&teacherId=${tid}`
+  if (teacher.value.resourceId) {
+    url += `&resourceId=${teacher.value.resourceId}`
+  }
+  if (!isPhoneBound(userStore.userInfo.phoneBound)) {
+    uni.navigateTo({
+      url: `${BIND_PHONE_PAGE}?redirect=${encodeURIComponent(url)}`,
+    })
+    return
+  }
+  uni.navigateTo({ url })
 }
 
 onLoad((query) => {
@@ -87,6 +116,11 @@ onLoad((query) => {
         class="mx-3 mt-3 w-auto"
         style="width: calc(100% - 24px); border-radius: 12px"
       />
+      <view class="mx-3 mt-4 mb-6">
+        <wd-button block type="primary" @click="goAppointment">
+          预约咨询
+        </wd-button>
+      </view>
     </template>
   </view>
 </template>

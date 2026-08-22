@@ -190,6 +190,7 @@ export function getParent(userId: string) {
 
 export interface SpecialTeacher {
   id?: string
+  userId?: string
   name: string
   title?: string
   specialties?: string
@@ -202,6 +203,8 @@ export interface SpecialTeacher {
   resourceId?: string
   auditRemark?: string
   auditTime?: string
+  phone?: string
+  initPassword?: string
 }
 
 export interface SpecialAuditPayload {
@@ -212,6 +215,10 @@ export interface SpecialAuditPayload {
 
 export function listTeachers(params?: ListQuery) {
   return request.get<PageResult<SpecialTeacher>>('/special/teacher/list', { params })
+}
+
+export function getMyTeacher() {
+  return request.get<SpecialTeacher>('/special/teacher/me')
 }
 
 export function addTeacher(data: SpecialTeacher) {
@@ -236,4 +243,32 @@ export function auditOrganizations(data: SpecialAuditPayload) {
 
 export function auditResources(data: SpecialAuditPayload) {
   return request.put('/special/resource/audit', data)
+}
+
+export interface SpecialAccount {
+  userId: string
+  phone?: string
+  nickname?: string
+  roles?: string[]
+  status?: string
+}
+
+export interface SpecialAccountRolesBody {
+  parent: boolean
+  teacher: boolean
+}
+
+export function listAccounts(params?: ListQuery) {
+  return request.get<PageResult<SpecialAccount>>('/special/account/list', { params })
+}
+
+export function updateAccountRoles(userId: string, data: SpecialAccountRolesBody) {
+  return request.put<{ needTeacherProfile?: boolean, phone?: string }>(
+    `/special/account/${userId}/roles`,
+    data,
+  )
+}
+
+export function resetAccountPassword(userId: string, password: string) {
+  return request.put(`/special/account/${userId}/password`, { password })
 }

@@ -23,9 +23,11 @@ import org.dromara.common.redis.enums.LimitType;
 import org.dromara.common.redis.utils.RedisUtils;
 import org.dromara.common.web.config.properties.CaptchaProperties;
 import org.dromara.common.web.core.WaveAndCircleCaptcha;
+import org.dromara.special.util.SpecialIdentitySupport;
 import org.dromara.sms4j.api.SmsBlend;
 import org.dromara.sms4j.api.entity.SmsResponse;
 import org.dromara.sms4j.core.factory.SmsFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -52,6 +54,12 @@ public class CaptchaController {
     private final CaptchaProperties captchaProperties;
     private final MailProperties mailProperties;
 
+    @Value("${special.sms.test-code-enabled:false}")
+    private boolean smsTestCodeEnabled;
+
+    @Value("${sms.blends.config1.access-key-id:}")
+    private String smsAccessKeyId;
+
     /**
      * 发送短信验证码。
      *
@@ -70,7 +78,24 @@ public class CaptchaController {
         String templateId = "";
         LinkedHashMap<String, String> map = new LinkedHashMap<>(1);
         map.put("code", code);
-        SmsBlend smsBlend = SmsFactory.getSmsBlend("config1");
+        SmsBlend smsBlend = null;
+        boolean blendFailed = false;
+        try {
+            smsBlend = SmsFactory.getSmsBlend("config1");
+        } catch (Exception ex) {
+            log.warn("SMS blend config1 unavailable: {}", ex.getMessage());
+            blendFailed = true;
+        }
+        boolean unavailable = blendFailed || smsBlend == null
+            || SpecialIdentitySupport.isSmsPlaceholderConfig(smsAccessKeyId);
+        if (unavailable) {
+            if (smsTestCodeEnabled) {
+                RedisUtils.setCacheObject(key, code, Duration.ofMinutes(Constants.CAPTCHA_EXPIRATION));
+                log.info("SMS test code {} -> {}", phoneNumber, code);
+                return R.ok();
+            }
+            return R.fail("短信通道未开通");
+        }
         SmsResponse smsResponse = smsBlend.sendMessage(phoneNumber, templateId, map);
         if (!smsResponse.isSuccess()) {
             log.error("验证码短信发送异常 => {}", smsResponse);

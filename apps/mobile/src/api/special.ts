@@ -1,5 +1,6 @@
 import type { IRuoYiPageResult, ISpecialAppointment, ISpecialArticle, ISpecialOrganization, ISpecialResource, ISpecialTeacher } from './types/special'
 import { http } from '@/http/http'
+import { mapTeacherIds } from './snowflake'
 
 /** 资源列表（已发布） */
 export function getResourceList(params: {
@@ -53,9 +54,17 @@ export function getTeacherList(params: {
   name?: string
   specialties?: string
 }) {
-  return http.get<IRuoYiPageResult<ISpecialTeacher>>('/special/mobile/teacher/list', params)
+  return http.get<IRuoYiPageResult<Record<string, unknown>>>('/special/mobile/teacher/list', params).then((res) => ({
+    ...res,
+    rows: (res.rows || []).map(row => mapTeacherIds(row as Record<string, unknown>)) as ISpecialTeacher[],
+  }))
 }
 
-export function getTeacherDetail(id: string | number) {
-  return http.get<ISpecialTeacher>(`/special/mobile/teacher/${id}`)
+export function getTeacherDetail(id: string) {
+  return http.get<Record<string, unknown>>(`/special/mobile/teacher/${id}`).then((row) => {
+    if (!row) {
+      return row as unknown as ISpecialTeacher
+    }
+    return mapTeacherIds(row) as ISpecialTeacher
+  })
 }

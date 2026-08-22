@@ -71,13 +71,14 @@ const adminSrc = path.resolve(mobileSrc, '../../admin/src')
 
 describe('admin tokens', () => {
   it('不再使用旧 muted，并锁定 Element primary', () => {
-    const appVue = fs.readFileSync(path.join(adminSrc, 'App.vue'), 'utf8')
+    const tokensScss = fs.readFileSync(path.join(adminSrc, 'styles/tokens.scss'), 'utf8')
+    const indexScss = fs.readFileSync(path.join(adminSrc, 'styles/index.scss'), 'utf8')
     const loginVue = fs.readFileSync(path.join(adminSrc, 'views/Login.vue'), 'utf8')
-    expect(appVue).toMatch(/--el-color-primary:\s*#1b7f6b/)
-    expect(appVue).not.toContain('#667874')
+    expect(tokensScss).toMatch(/--el-color-primary:\s*#1[bB]7[fF]6[bB]/)
+    expect(tokensScss).not.toContain('#667874')
     expect(loginVue).not.toContain('#667874')
-    expect(appVue).toMatch(/#4[fF]635[fF]/)
-    expect(appVue).toMatch(/:focus-visible/)
+    expect(tokensScss).toMatch(/#4[fF]635[fF]/)
+    expect(indexScss).toMatch(/:focus-visible/)
   })
 
   it('资源状态 Tag 带文字', () => {

@@ -3,6 +3,7 @@ import type { IMyAppointment } from '@/api/me'
 import { APPOINTMENT_STATUS_MAP, getMyAppointments } from '@/api/me'
 import { LOGIN_PAGE } from '@/router/config'
 import { useTokenStore } from '@/store/token'
+import { isTeacherRole, readCachedRole } from '@/utils/current-role'
 
 definePage({
   style: {
@@ -55,8 +56,8 @@ function goResourceList() {
   uni.switchTab({ url: '/pages/resource/list' })
 }
 
-function goDetail(id: string | number) {
-  uni.navigateTo({ url: `/pages/me/appointment-detail?id=${String(id)}` })
+function goDetail(id: string) {
+  uni.navigateTo({ url: `/pages/me/appointment-detail?id=${id}` })
 }
 
 function loadMore() {
@@ -71,6 +72,9 @@ function formatDate(value?: string) {
 }
 
 onShow(() => {
+  uni.setNavigationBarTitle({
+    title: isTeacherRole(readCachedRole()) ? '收到的预约' : '我的预约',
+  })
   if (!tokenStore.hasLogin) {
     loading.value = false
     return

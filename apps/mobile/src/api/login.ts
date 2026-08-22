@@ -25,12 +25,21 @@ interface IRuoYiLoginVo {
 /** RuoYi 用户信息响应 */
 interface IRuoYiUserInfoVo {
   user: {
-    userId: number
+    userId: string | number
     userName: string
     nickName: string
     avatar?: string
   }
   roles: string[]
+  currentRole?: string
+  phoneBound?: boolean
+}
+
+export interface IRegisterForm {
+  username: string
+  password: string
+  code: string
+  wxPhoneCode?: string
 }
 
 function mapLoginVo(data: IRuoYiLoginVo): IAuthLoginRes {
@@ -61,6 +70,33 @@ export function login(loginForm: ILoginForm) {
 }
 
 /**
+ * 家长手机号注册。不要带 grantType；Clientid 请求头由拦截器附加。
+ */
+export function register(form: IRegisterForm) {
+  return http.post<void>('/auth/register', {
+    username: form.username,
+    password: form.password,
+    code: form.code,
+    clientId: RUOYI_CLIENT_ID,
+    ...(form.wxPhoneCode ? { wxPhoneCode: form.wxPhoneCode } : {}),
+  })
+}
+
+/**
+ * 切换当前身份
+ */
+export function switchCurrentRole(roleKey: string) {
+  return http.put<void>('/auth/current-role', { roleKey })
+}
+
+/**
+ * 发送短信验证码
+ */
+export function sendSmsCode(phoneNumber: string) {
+  return http.get<void>('/resource/sms/code', { phoneNumber })
+}
+
+/**
  * 刷新token
  */
 export function refreshToken(refreshToken: string) {
@@ -73,11 +109,13 @@ export function refreshToken(refreshToken: string) {
 export function getUserInfo() {
   return http.get<IRuoYiUserInfoVo>('/system/user/getInfo').then((res) => {
     const info: IUserInfoRes = {
-      userId: res.user.userId,
+      userId: String(res.user.userId),
       username: res.user.userName,
       nickname: res.user.nickName,
       avatar: res.user.avatar,
       roles: res.roles,
+      currentRole: res.currentRole,
+      phoneBound: res.phoneBound,
     }
     return info
   })

@@ -1,7 +1,7 @@
 # 特教平台：一人一号多角色（家长 / 老师）
 
 日期：2026-08-22  
-状态：待用户确认 spec  
+状态：已批准 → 实施计划已写 `docs/superpowers/plans/2026-08-22-identity-roles.md`  
 前置：一期登录协议（`POST /auth/login` + `Clientid`）已可用；微信 `grantType=xcx` 会自动建家长；老师档案 `special_teacher` 已有可选 `user_id`，但后台未绑登录账号；自定义 admin 无角色管理页。
 
 ## 背景

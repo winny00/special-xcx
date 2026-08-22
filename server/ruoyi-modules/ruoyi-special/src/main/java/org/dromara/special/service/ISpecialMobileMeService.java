@@ -2,8 +2,10 @@ package org.dromara.special.service;
 
 import org.dromara.common.core.domain.PageResult;
 import org.dromara.common.mybatis.core.page.PageQuery;
+import org.dromara.special.domain.bo.BindPhoneBody;
 import org.dromara.special.domain.bo.SpecialMobileProfileBo;
 import org.dromara.special.domain.vo.SpecialAppointmentVo;
+import org.dromara.special.domain.vo.SpecialBindPhoneVo;
 import org.dromara.special.domain.vo.SpecialMobileProfileVo;
 
 /**
@@ -32,5 +34,10 @@ public interface ISpecialMobileMeService {
      * 查询当前用户预约详情
      */
     SpecialAppointmentVo getMyAppointment(Long id);
+
+    /**
+     * 绑定手机号：写号或合并微信临时用户，返回可供前端替换的 token。
+     */
+    SpecialBindPhoneVo bindPhone(BindPhoneBody body);
 
 }

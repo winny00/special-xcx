@@ -29,6 +29,8 @@ import org.dromara.system.api.domain.PushPayloadDTO;
 import org.dromara.system.api.model.RegisterBody;
 import org.dromara.system.api.model.SocialLoginBody;
 import org.dromara.system.domain.vo.SysClientVo;
+import org.dromara.special.service.impl.SpecialParentRegisterService;
+import org.dromara.special.util.SpecialIdentitySupport;
 import org.dromara.system.service.ISysClientService;
 import org.dromara.system.service.ISysConfigService;
 import org.dromara.system.service.ISysSocialService;
@@ -64,6 +66,7 @@ public class AuthController {
     private final ISysClientService clientService;
     private final ScheduledExecutorService scheduledExecutorService;
     private final MessageService messageService;
+    private final SpecialParentRegisterService parentRegisterService;
 
 
     /**
@@ -180,6 +183,10 @@ public class AuthController {
     @ApiEncrypt
     @PostMapping("/register")
     public R<Void> register(@Validated @RequestBody RegisterBody user) {
+        if (SpecialIdentitySupport.XCX_CLIENT_ID.equals(user.getClientId())) {
+            parentRegisterService.register(user);
+            return R.ok();
+        }
         if (!configService.selectRegisterEnabled()) {
             return R.fail("当前系统没有开启注册功能！");
         }

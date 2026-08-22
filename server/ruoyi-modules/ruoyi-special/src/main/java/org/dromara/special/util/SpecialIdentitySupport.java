@@ -64,4 +64,18 @@ public final class SpecialIdentitySupport {
             throw new IllegalArgumentException("至少保留一个角色");
         }
     }
+
+    public static boolean smsCodeMatches(String expected, String actual) {
+        if (expected == null || actual == null) {
+            return false;
+        }
+        return expected.equals(actual);
+    }
+
+    public static boolean isSmsPlaceholderConfig(String accessKeyId) {
+        if (accessKeyId == null || accessKeyId.isBlank()) {
+            return true;
+        }
+        return accessKeyId.contains("您的");
+    }
 }

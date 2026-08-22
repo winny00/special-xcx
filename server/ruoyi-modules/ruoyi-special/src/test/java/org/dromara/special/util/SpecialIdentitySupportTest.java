@@ -52,4 +52,21 @@ class SpecialIdentitySupportTest {
             () -> SpecialIdentitySupport.assertKeepAtLeastOneRole(false, false));
         SpecialIdentitySupport.assertKeepAtLeastOneRole(true, false);
     }
+
+    @Test
+    void smsCodeMatchesRequiresExactValue() {
+        assertTrue(SpecialIdentitySupport.smsCodeMatches("1234", "1234"));
+        assertFalse(SpecialIdentitySupport.smsCodeMatches("1234", "1235"));
+        assertFalse(SpecialIdentitySupport.smsCodeMatches(null, "1234"));
+        assertFalse(SpecialIdentitySupport.smsCodeMatches("1234", null));
+        assertFalse(SpecialIdentitySupport.smsCodeMatches("1234", " 1234"));
+    }
+
+    @Test
+    void smsPlaceholderConfigIsChineseAccessKeyOrBlank() {
+        assertTrue(SpecialIdentitySupport.isSmsPlaceholderConfig("您的accessKey"));
+        assertTrue(SpecialIdentitySupport.isSmsPlaceholderConfig(""));
+        assertTrue(SpecialIdentitySupport.isSmsPlaceholderConfig(null));
+        assertFalse(SpecialIdentitySupport.isSmsPlaceholderConfig("LTAI5realKey"));
+    }
 }

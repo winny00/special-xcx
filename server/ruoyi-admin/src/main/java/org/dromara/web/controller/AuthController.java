@@ -19,6 +19,7 @@ import org.dromara.common.core.utils.DateUtils;
 import org.dromara.common.core.utils.MessageUtils;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.core.utils.ValidatorUtils;
+import org.dromara.common.core.validate.RegisterGroup;
 import org.dromara.common.encrypt.annotation.ApiEncrypt;
 import org.dromara.common.json.utils.JsonUtils;
 import org.dromara.common.satoken.utils.LoginHelper;
@@ -186,7 +187,7 @@ public class AuthController {
      */
     @ApiEncrypt
     @PostMapping("/register")
-    public R<Void> register(@Validated @RequestBody RegisterBody user) {
+    public R<Void> register(@Validated(RegisterGroup.class) @RequestBody RegisterBody user) {
         if (SpecialIdentitySupport.XCX_CLIENT_ID.equals(user.getClientId())) {
             parentRegisterService.register(user);
             return R.ok();
